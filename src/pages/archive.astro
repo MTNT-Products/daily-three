@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const digests = (await getCollection('digest')).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+---
+
+<BaseLayout title="Archive — Daily Three">
+  <h1 style="font-size: 1.25rem; margin-bottom: 1rem">Archive</h1>
+  <ul class="archive-list">
+    {
+      digests.map((d) => (
+        <li>
+          <a href={`${import.meta.env.BASE_URL}digest/${d.id}/`}>{d.data.title}</a>
+        </li>
+      ))
+    }
+  </ul>
+</BaseLayout>

@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const digests = await getCollection('digest');
+  return digests.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const slug = entry.id;
+---
+
+<BaseLayout title={`${entry.data.title} — Daily Three`} description={entry.data.lead}>
+  <p class="digest-meta">{entry.data.title}</p>
+  <p class="digest-lead">{entry.data.lead}</p>
+  {entry.data.articles.map((article, index) => (
+    <ArticleCard article={article} index={index} digestSlug={slug} />
+  ))}
+  <Content />
+</BaseLayout>

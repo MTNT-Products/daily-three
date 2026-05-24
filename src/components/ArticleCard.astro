@@ -1,0 +1,90 @@
+---
+interface Article {
+  title: string;
+  summary: string;
+  source: string;
+  url: string;
+  image?: string;
+}
+
+interface Props {
+  article: Article;
+  index: number;
+  digestSlug: string;
+}
+
+const { article, index, digestSlug } = Astro.props;
+const num = String(index + 1).padStart(2, '0');
+const feedbackId = `${digestSlug}-${index}`;
+---
+
+<article class="article-card" data-article-url={article.url}>
+  {
+    article.image ? (
+      <img class="article-img" src={article.image} alt="" loading="lazy" data-fallback />
+    ) : (
+      <div class="article-img placeholder">画像なし</div>
+    )
+  }
+  <div class="article-body">
+    <div class="article-num">{num}</div>
+    <h2>{article.title}</h2>
+    <p class="summary">{article.summary}</p>
+    <p class="source-line">
+      出典: <a href={article.url} target="_blank" rel="noopener noreferrer">{article.source}</a>
+    </p>
+    <div class="feedback" data-feedback-id={feedbackId} data-source={article.source} data-url={article.url}>
+      <button type="button" data-v="good">Good</button>
+      <button type="button" data-v="bad">Bad</button>
+    </div>
+    <p class="feedback-toast" aria-live="polite"></p>
+  </div>
+</article>
+
+<script>
+  document.querySelectorAll('img[data-fallback]').forEach((img) => {
+    img.addEventListener('error', () => {
+      const div = document.createElement('div');
+      div.className = 'article-img placeholder';
+      div.textContent = '画像を読み込めませんでした';
+      img.replaceWith(div);
+    });
+  });
+
+  const STORAGE_KEY = 'daily-three-feedback';
+
+  function loadFeedback() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  function saveFeedback(data: Record<string, string>) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  document.querySelectorAll('.feedback').forEach((group) => {
+    const el = group as HTMLElement;
+    const id = el.dataset.feedbackId!;
+    const stored = loadFeedback();
+    if (stored[id]) {
+      const btn = el.querySelector(`[data-v="${stored[id]}"]`);
+      btn?.classList.add(stored[id] === 'good' ? 'is-good' : 'is-bad');
+    }
+
+    el.querySelectorAll('button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const v = (btn as HTMLButtonElement).dataset.v!;
+        const all = loadFeedback();
+        all[id] = v;
+        saveFeedback(all);
+        el.querySelectorAll('button').forEach((b) => b.classList.remove('is-good', 'is-bad'));
+        btn.classList.add(v === 'good' ? 'is-good' : 'is-bad');
+        const toast = el.parentElement?.querySelector('.feedback-toast');
+        if (toast) toast.textContent = '記録しました（この端末）。次回の選定調整は feedback.jsonl と同期予定です。';
+      });
+    });
+  });
+</script>

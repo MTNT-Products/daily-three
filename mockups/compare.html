@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daily Three — UI比較（方式A）</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-page: #f0f0ee;
+      --bg-panel: #fafaf8;
+      --text: #1a1a18;
+      --text-muted: #5c5c58;
+      --border: #e2e2de;
+      --accent: #c45c26;
+      --good: #2d6a4f;
+      --bad: #9b2226;
+      --panel-width: 360px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: var(--bg-page);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--text);
+      color: #f5f5f3;
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1.5rem;
+      border-bottom: 1px solid #333;
+    }
+
+    .toolbar h1 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .toolbar p {
+      font-size: 0.8rem;
+      opacity: 0.85;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .toolbar code {
+      background: #333;
+      padding: 0.15em 0.4em;
+      border-radius: 3px;
+      font-size: 0.75rem;
+    }
+
+    .compare-strip {
+      display: flex;
+      gap: 1rem;
+      padding: 1.25rem;
+      overflow-x: auto;
+      align-items: flex-start;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .panel-wrap {
+      flex: 0 0 var(--panel-width);
+      scroll-snap-align: start;
+    }
+
+    .panel-label {
+      margin-bottom: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.75rem;
+    }
+
+    .panel-label strong {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 0.2rem;
+      color: var(--accent);
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      min-height: 720px;
+    }
+
+    /* —— Shared digest blocks —— */
+    .digest-header {
+      padding: 1.25rem 1.25rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .digest-header .brand {
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .digest-header .tagline {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .digest-meta {
+      padding: 0.75rem 1.25rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .digest-lead {
+      padding: 1rem 1.25rem;
+      font-size: 0.88rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .article {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .article:last-child { border-bottom: none; }
+
+    .article-img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+      background: #ddd;
+    }
+
+    .article-img.placeholder {
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .article-num {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .article h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.35;
+      margin-bottom: 0.6rem;
+    }
+
+    .article .summary {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .article .source {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .feedback {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .feedback button {
+      flex: 1;
+      min-height: 44px;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .feedback button:hover {
+      background: #f5f5f3;
+    }
+
+    .feedback button.active-good {
+      border-color: var(--good);
+      color: var(--good);
+      background: #f0faf5;
+    }
+
+    .feedback button.active-bad {
+      border-color: var(--bad);
+      color: var(--bad);
+      background: #fdf5f5;
+    }
+
+    /* —— Variant A: Magazine serif —— */
+    .variant-a .digest-header .brand {
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 1.5rem;
+    }
+
+    .variant-a .digest-lead {
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .variant-a .article {
+      padding: 1.5rem 1.5rem 1.75rem;
+    }
+
+    .variant-a .article h3 {
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 1.05rem;
+    }
+
+    .variant-a .article-img {
+      aspect-ratio: 4 / 3;
+      margin-bottom: 1rem;
+      border-radius: 2px;
+    }
+
+    /* —— Variant B: Modern sans compact —— */
+    .variant-b .digest-header {
+      padding: 1rem 1rem 0.5rem;
+    }
+
+    .variant-b .digest-header .brand {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .variant-b .digest-lead {
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      background: #f3f3f0;
+    }
+
+    .variant-b .article {
+      padding: 1rem;
+    }
+
+    .variant-b .article-img {
+      aspect-ratio: 16 / 9;
+      margin-bottom: 0.75rem;
+      border-radius: 8px;
+    }
+
+    .variant-b .article h3 {
+      font-size: 0.95rem;
+    }
+
+  .variant-b .article .summary {
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    /* —— Variant C: 16:9 cinematic —— */
+    .variant-c .digest-header {
+      text-align: center;
+      padding: 1.5rem 1rem 1rem;
+    }
+
+    .variant-c .digest-lead {
+      text-align: left;
+      font-size: 0.86rem;
+      border-bottom: 2px solid var(--text);
+    }
+
+    .variant-c .article {
+      padding: 0;
+    }
+
+    .variant-c .article-img {
+      aspect-ratio: 16 / 9;
+      border-radius: 0;
+    }
+
+    .variant-c .article-body {
+      padding: 1rem 1.25rem 1.25rem;
+    }
+
+    /* —— Variant D: Full-bleed image hero —— */
+    .variant-d .panel {
+      background: #fff;
+    }
+
+    .variant-d .digest-header {
+      padding: 1rem 1rem 0.5rem;
+      border: none;
+    }
+
+    .variant-d .digest-header .brand {
+      font-size: 1.1rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .variant-d .digest-lead {
+      font-size: 0.8rem;
+      padding: 0.5rem 1rem 1rem;
+      border: none;
+    }
+
+    .variant-d .article {
+      padding: 0 0 1.5rem;
+      border: none;
+    }
+
+    .variant-d .article-img {
+      aspect-ratio: 3 / 2;
+      margin-bottom: 0;
+    }
+
+    .variant-d .article-body {
+      padding: 0.75rem 1rem 0;
+    }
+
+    .variant-d .article h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .variant-d .article .summary {
+      font-size: 0.78rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .variant-d .feedback {
+      padding: 0 1rem;
+    }
+
+    @media (max-width: 900px) {
+      :root { --panel-width: min(320px, 88vw); }
+      .toolbar p { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <h1>Daily Three — UI比較（方式A）</h1>
+    <p>横にスクロールして4案を比較。同じダミー記事3件。選んだらチャットで「案Bで」と伝えてください。ローカル表示: <code>npx serve mockups</code> → /compare.html</p>
+  </header>
+
+  <div class="compare-strip" id="compare-root"></div>
+
+  <script>
+    const DATA = {
+      siteName: "Daily Three",
+      siteTagline: "Auto & Product Design",
+      date: "2026年5月24日（金）",
+      lead: "週末に相次いだ初公開と量産発表から、デザイン視点で押さえたい3件を選びました。CMFとプロポーションに注目が集まっています。",
+      articles: [
+        {
+          id: 1,
+          title: "欧州で世界初公開されたEVコンセプト — ソフトな曲面と matte 金属のCMF",
+          summary: "外板は連続したサーフェスでドアハンドルを排除し、ライトユニットがブランドの「横顔」を再定義しています。内装はリサイクル繊維と低反射ガラスを組み合わせ、素材の対比が明確です。",
+          source: "Car Design News",
+          image: "https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800&h=500&fit=crop"
+        },
+        {
+          id: 2,
+          title: "次世代SUVの量産モデル、スタジオショットでプロポーション初公開",
+          summary: "ホイールアーチの張り出しとキャビン後方の急傾斜で、従来より低く見えるスタンスを実現。DLOがフロントフェンダーまで伸び、一体感が強調されています。",
+          source: "Dezeen",
+          image: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&h=500&fit=crop"
+        },
+        {
+          id: 3,
+          title: "プレミアムセダンの内装リデザイン — ウォームグレー基調のCMF刷新",
+          summary: "ダッシュボードは水平レイヤーを薄く積み重ね、HMIは表示領域を最小化。シートは通気性メッシュと天然木調トリムのコントラストが特徴です。",
+          source: "Form Trends",
+          image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&h=500&fit=crop"
+        }
+      ]
+    };
+
+    const VARIANTS = [
+      {
+        id: "a",
+        label: "案A — 雑誌・セリフ",
+        desc: "Libre Baskerville、余白広め、4:3画像。編集者風リードをイタリックで強調。"
+      },
+      {
+        id: "b",
+        label: "案B — モダン・サンセリフ",
+        desc: "DM Sans、コンパクト、16:9・角丸。リードは薄いグレー背景。"
+      },
+      {
+        id: "c",
+        label: "案C — シネマ16:9",
+        desc: "画像を全幅16:9で統一。テキストは画像下のブロックに分離。"
+      },
+      {
+        id: "d",
+        label: "案D — フルブリード",
+        desc: "画像を最大限大きく、タイトル・要約は最小。ブランドは大文字ラベル風。"
+      }
+    ];
+
+    function imgTag(src, alt, className) {
+      return `<img class="article-img ${className || ""}" src="${src}" alt="${alt}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'article-img placeholder',textContent:'画像なし'}))" />`;
+    }
+
+    function articleHtml(article, i, variantId) {
+      const num = String(i + 1).padStart(2, "0");
+      const img = imgTag(article.image, article.title);
+      const body = `
+        <div class="article-num">${num}</div>
+        <h3>${article.title}</h3>
+        <p class="summary">${article.summary}</p>
+        <p class="source">出典: ${article.source}</p>
+        <div class="feedback" data-article="${article.id}">
+          <button type="button" data-v="good">Good</button>
+          <button type="button" data-v="bad">Bad</button>
+        </div>
+      `;
+      if (variantId === "c" || variantId === "d") {
+        return `<article class="article">${img}<div class="article-body">${body}</div></article>`;
+      }
+      return `<article class="article">${img}${body}</article>`;
+    }
+
+    function renderVariant(v) {
+      const articles = DATA.articles.map((a, i) => articleHtml(a, i, v.id)).join("");
+      return `
+        <div class="panel-wrap">
+          <div class="panel-label">
+            <strong>${v.label}</strong>
+            ${v.desc}
+          </div>
+          <div class="panel variant-${v.id}">
+            <header class="digest-header">
+              <div class="brand">${DATA.siteName}</div>
+              <div class="tagline">${DATA.siteTagline}</div>
+            </header>
+            <div class="digest-meta">${DATA.date}</div>
+            <p class="digest-lead">${DATA.lead}</p>
+            ${articles}
+          </div>
+        </div>
+      `;
+    }
+
+    document.getElementById("compare-root").innerHTML = VARIANTS.map(renderVariant).join("");
+
+    document.querySelectorAll(".feedback button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const group = btn.closest(".feedback");
+        group.querySelectorAll("button").forEach((b) => {
+          b.classList.remove("active-good", "active-bad");
+        });
+        btn.classList.add(btn.dataset.v === "good" ? "active-good" : "active-bad");
+      });
+    });
+  </script>
+</body>
+</html>

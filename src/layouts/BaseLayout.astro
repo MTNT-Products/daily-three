@@ -1,0 +1,41 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Daily Three: Auto & Product Design — 毎日3件のデザインニュース' } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a href={`${import.meta.env.BASE_URL}`} style="text-decoration: none; color: inherit">
+        <div class="brand">Daily Three</div>
+        <div class="tagline">Auto &amp; Product Design</div>
+      </a>
+      <nav class="site-nav" aria-label="メイン">
+        <a href={`${import.meta.env.BASE_URL}`} aria-current={Astro.url.pathname === '/' || Astro.url.pathname.endsWith('/') ? 'page' : undefined}>Home</a>
+        <a href={`${import.meta.env.BASE_URL}archive/`} aria-current={Astro.url.pathname.includes('/archive') ? 'page' : undefined}>Archive</a>
+        <a href={`${import.meta.env.BASE_URL}about/`} aria-current={Astro.url.pathname.includes('/about') ? 'page' : undefined}>About</a>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>Daily Three — personal curation for industrial &amp; product design</p>
+    </footer>
+  </body>
+</html>

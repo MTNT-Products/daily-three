@@ -1,0 +1,271 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap');
+
+:root {
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --text: #1a1a18;
+  --muted: #5c5c58;
+  --border: #e2e2de;
+  --accent: #c45c26;
+  --good: #2d6a4f;
+  --bad: #9b2226;
+  --max: 720px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* —— Variant C: cinematic 16:9 —— */
+.site-header {
+  text-align: center;
+  padding: 2.5rem 1.25rem 1.5rem;
+  max-width: var(--max);
+  margin: 0 auto;
+}
+
+.site-header .brand {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.site-header .tagline {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin-top: 0.35rem;
+}
+
+.site-nav {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+}
+
+.site-nav a {
+  color: var(--muted);
+}
+
+.site-nav a[aria-current='page'] {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+main {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+}
+
+.digest-meta {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.digest-lead {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  padding: 1rem 0 1.25rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 2px solid var(--text);
+}
+
+.article-card {
+  margin-bottom: 2.5rem;
+}
+
+.article-card .article-img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--border);
+}
+
+.article-card .article-img.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.article-body {
+  padding: 1rem 0 0;
+}
+
+.article-num {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.article-body h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 0.65rem;
+}
+
+.article-body .summary {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
+.article-body .source-line {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.feedback {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.feedback button {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.feedback button:hover {
+  background: #f3f3f0;
+}
+
+.feedback button.is-good {
+  border-color: var(--good);
+  color: var(--good);
+  background: #f0faf5;
+}
+
+.feedback button.is-bad {
+  border-color: var(--bad);
+  color: var(--bad);
+  background: #fdf5f5;
+}
+
+.feedback-toast {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+  min-height: 1.2em;
+}
+
+.archive-list {
+  list-style: none;
+}
+
+.archive-list li {
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 0;
+}
+
+.archive-list a {
+  color: var(--text);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.archive-list a:hover {
+  color: var(--accent);
+}
+
+.about-prose {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+.about-prose p + p {
+  margin-top: 1rem;
+}
+
+.site-footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  margin-top: 2rem;
+}
+
+.home-hero {
+  text-align: center;
+  padding: 1rem 0 2rem;
+}
+
+.home-hero h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.home-hero p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.home-latest {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  color: var(--text);
+  text-decoration: none;
+  text-align: center;
+  font-weight: 600;
+}
+
+.home-latest:hover {
+  border-color: var(--accent);
+}

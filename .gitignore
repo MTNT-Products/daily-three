@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# build
+dist/
+.astro/
+
+# env
+.env
+.env.*
+
+# data (runtime cache; feedback.jsonl is tracked)
+data/seen-urls.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+terminals/
+
+# env template is tracked; secrets are not
+!.env.example
+
+# logs
+*.log
