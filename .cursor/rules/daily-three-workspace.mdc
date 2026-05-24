@@ -1,0 +1,14 @@
+---
+description: Daily Three の正規作業ディレクトリと構成
+alwaysApply: true
+---
+
+# Daily Three — 作業ベース
+
+- **正規パス**: `C:\Users\rhcpg\src\daily-three`（`~/src/daily-three`）
+- 一時 Cursor ワークスペース（`AppData\Local\Temp\...`）ではなく、常にこのフォルダを編集・実行する
+- UI: **案C**（16:9 シネマ、画像全幅、ライトテーマ）
+- サイト名: **Daily Three: Auto & Product Design**
+- Astro のサイトソースはルートの `src/`（pages, layouts, components）
+- 収集パイプラインはルートの `scripts/`、`sources.yaml`
+- UI 比較モック: `mockups/compare.html`（`@ui-mockup-compare` スキル）
