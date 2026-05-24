@@ -43,9 +43,18 @@ npm run build
 
 ## デプロイ（GitHub Pages）
 
-1. リポジトリ Settings → Pages → GitHub Actions
-2. Secrets に `OPENAI_API_KEY` 等を登録
-3. `astro.config.mjs` の `site` / `base` を `https://<user>.github.io/daily-three` に合わせる
+リポジトリ: https://github.com/rhcpgtbd0611-moto/daily-three
+
+1. リポジトリ Settings → Pages → Source: **GitHub Actions**
+2. Settings → Secrets → Actions に `OPENAI_API_KEY`, `SITE_URL` 等を登録
+3. **CIワークフローを push する場合**（初回のみ）:
+   ```bash
+   gh auth refresh -h github.com -s workflow
+   git add .github/workflows/daily-digest.yml
+   git commit -m "ci: add daily digest workflow"
+   git push
+   ```
+   （OAuth トークンに `workflow` スコープが必要です）
 
 ## スキル
 
