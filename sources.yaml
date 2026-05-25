@@ -2,15 +2,10 @@
 # weight: multiplier for rule-based scoring (adjusted by Good/Bad feedback over time)
 
 sources:
-  - id: car-design-news
-    name: Car Design News
-    url: https://www.cardesignnews.com/feed
-    weight: 1.5
-    category: automotive
-
+  # cardesignnews.com/feed returns 404; Dezeen main feed covers transport
   - id: dezeen-cars
     name: Dezeen
-    url: https://www.dezeen.com/transport/cars/feed/
+    url: https://www.dezeen.com/feed/
     weight: 1.3
     category: automotive
 
@@ -22,7 +17,7 @@ sources:
 
   - id: designboom-auto
     name: Designboom
-    url: https://www.designboom.com/category/technology/cars/feed/
+    url: https://www.designboom.com/feed/
     weight: 1.2
     category: automotive
 

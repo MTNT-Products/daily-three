@@ -19,10 +19,14 @@ C:\Users\rhcpg\src\daily-three
 ## よく使うコマンド
 
 ```bash
-npm run dev      # ローカルプレビュー
-npm run digest   # ダイジェスト生成
-npm run build    # 静的ビルド
+npm run dev          # ローカルプレビュー
+npm run digest:dry   # 収集・選定の確認
+npm run digest       # ダイジェスト生成
+npm run eval:llm     # LLM プロバイダ比較
+npm run build        # 静的ビルド
 ```
+
+公開手順: [docs/DEPLOY.md](docs/DEPLOY.md)
 
 ## ディレクトリ構成（要点）
 

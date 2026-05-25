@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { collectArticles, markSeen } from './collect.js';
-import { buildSourceWeights, loadFeedbackWeights, pickTop3WithLlm, ruleScore } from './rank.js';
+import { buildSourceWeights, loadFeedbackWeights, pickTop3, ruleScore } from './rank.js';
+import { getLlmConfig, resolveActiveProvider } from './llm-config.js';
 import { publishDigest } from './publish.js';
 import { enrichImages } from './ogp.js';
 import { sendDigestEmail } from './email.js';
@@ -19,7 +20,9 @@ async function main() {
   console.log(`[digest] ${raw.length} new candidates`);
 
   const scored = ruleScore(raw, config, sourceWeights);
-  const { lead, articles } = await pickTop3WithLlm(scored, process.env.OPENAI_API_KEY);
+  const llmConfig = getLlmConfig();
+  const { lead, articles, provider } = await pickTop3(scored, llmConfig);
+  console.log(`[digest] Picker: ${resolveActiveProvider(llmConfig)} (requested: ${llmConfig.provider}, used: ${provider})`);
 
   if (articles.length === 0) {
     console.log('[digest] No articles to publish');

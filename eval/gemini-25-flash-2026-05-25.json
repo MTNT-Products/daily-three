@@ -1,0 +1,26 @@
+{
+  "lead": "ルールベースで選定した本日の注目3件です。LLM_PROVIDER と API キーを設定すると日本語の編集者風要約が有効になります。",
+  "articles": [
+    {
+      "title": "Renesa's brick-like rug collection explores architecture beyond buildings",
+      "summary": "Architecture studio Renesa has collaborated with Indian rug brand House of Knots to create a series of hand-tufted collectible rugs designed as geometric abstractions of the humble brick. The collection, named Brick by Brick, takes its cue from the modular building material as the \"first act of architecture\" according to Sanchit Arora, principal architect at\nThe post Renesa's brick-like rug collection explores architecture beyond buildings appeared first on Dezeen.",
+      "source": "Dezeen",
+      "url": "https://www.dezeen.com/2026/05/25/renesa-brick-rug-collection/",
+      "image": "http://static.dezeen.com/uploads/2026/05/renesa-brick-rug-collection_dezeen_2364_col_0-411x411.jpg"
+    },
+    {
+      "title": "Weathering steel wraps Indigenous museum in Arizona by EYRC",
+      "summary": "California studio EYRC Architects has expanded the Cocopah Museum in Arizona with a standalone building constructed from weathering steel and pigmented cast concrete. The Cocopah Museum and Cultural Center preserves and showcases the history and traditions of the Indigenous people of the Cocopah Nation, located close to the city of Yuma and the Colorado River\nThe post Weathering steel wraps Indigenous museum in Arizona by EYRC appeared first on Dezeen.",
+      "source": "Dezeen",
+      "url": "https://www.dezeen.com/2026/05/24/cocopah-museum-cultural-center-expansion-arizona-eyrc-architects/",
+      "image": "http://static.dezeen.com/uploads/2026/05/cocopah-museum_eyrc_dezeen_sq1-411x411.jpg"
+    },
+    {
+      "title": "Summer Home by Mindspark Architects overlooks cardamom plantation in India",
+      "summary": "Indian studio Mindspark Architects has created a house overlooking a cardamom plantation in Kerala, using sliding glass doors to connect its concrete interiors and the surrounding landscape. Named Summer Home, the 360-square-metre dwelling is partially sunken into a sloping site at the highest point of the lush plantation in Idukki. Mindspark Architects designed the home\nThe post Summer Home by Mindspark Architects overlooks cardamom plantation in India appeared first on Dezeen.",
+      "source": "Dezeen",
+      "url": "https://www.dezeen.com/2026/05/25/summer-home-mindspark-architects/",
+      "image": "http://static.dezeen.com/uploads/2026/05/summer-home-mindspark-architects-architecture-residential-house-kerala-india_dezeen_2364_sq-411x411.jpg"
+    }
+  ]
+}

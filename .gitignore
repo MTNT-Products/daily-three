@@ -9,8 +9,7 @@ dist/
 .env
 .env.*
 
-# data (runtime cache; feedback.jsonl is tracked)
-data/seen-urls.json
+# data — feedback.jsonl and seen-urls.json are tracked for CI persistence
 
 # OS
 .DS_Store
