@@ -97,6 +97,7 @@ function mapPicks(top: ScoredArticle[], parsed: LlmJson): { lead: string; articl
       title: p.titleJa,
       summary: p.summaryJa,
       source: src.sourceName,
+      sourceId: src.sourceId,
       url: src.url,
       image: src.image,
     };
@@ -104,9 +105,18 @@ function mapPicks(top: ScoredArticle[], parsed: LlmJson): { lead: string; articl
   return { lead: parsed.lead, articles };
 }
 
+function extractJson(raw: string): string {
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced) return fenced[1].trim();
+  const start = raw.indexOf('{');
+  const end = raw.lastIndexOf('}');
+  if (start >= 0 && end > start) return raw.slice(start, end + 1);
+  return raw.trim();
+}
+
 function parseLlmJson(raw: string, top: ScoredArticle[]): { lead: string; articles: DigestArticle[] } | null {
   try {
-    const parsed = JSON.parse(raw) as LlmJson;
+    const parsed = JSON.parse(extractJson(raw)) as LlmJson;
     if (!parsed.lead || !Array.isArray(parsed.picks)) return null;
     return mapPicks(top, parsed);
   } catch {
@@ -122,6 +132,7 @@ function fallbackPick(top: ScoredArticle[]): { lead: string; articles: DigestArt
       title: a.title,
       summary: a.summary || '（要約なし — 原文リンクからご確認ください）',
       source: a.sourceName,
+      sourceId: a.sourceId,
       url: a.url,
       image: a.image,
     })),

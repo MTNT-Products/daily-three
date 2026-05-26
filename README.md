@@ -54,7 +54,9 @@ npm run eval:llm
 ## Good / Bad フィードバック
 
 - サイト上のボタン → ブラウザ `localStorage` に保存
-- `data/feedback.jsonl` に手動または今後の同期で追記 → 次回 `npm run digest` のソース重みに反映
+- フッターの **フィードバックをエクスポート** → JSONL をダウンロード
+- `npm run feedback:merge -- feedback-export-YYYY-MM-DD.jsonl` で `data/feedback.jsonl` にマージ
+- 次回 `npm run digest` のソース重みに反映
 
 ## UIモック（方式A）
 

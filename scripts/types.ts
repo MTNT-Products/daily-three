@@ -35,6 +35,7 @@ export interface DigestArticle {
   title: string;
   summary: string;
   source: string;
+  sourceId: string;
   url: string;
   image?: string;
   reason?: string;

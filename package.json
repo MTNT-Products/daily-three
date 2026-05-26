@@ -13,6 +13,7 @@
     "digest": "tsx scripts/run-digest.ts",
     "digest:dry": "tsx scripts/run-digest.ts --dry-run",
     "eval:llm": "tsx scripts/eval-llm.ts",
+    "feedback:merge": "tsx scripts/feedback-merge.ts",
     "astro": "astro"
   },
   "dependencies": {

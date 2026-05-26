@@ -36,6 +36,24 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     </main>
     <footer class="site-footer">
       <p>Daily Three — personal curation for industrial &amp; product design</p>
+      <button type="button" class="feedback-export-btn" id="feedback-export">フィードバックをエクスポート</button>
+      <p class="feedback-export-status" id="feedback-export-status" aria-live="polite"></p>
     </footer>
   </body>
 </html>
+
+<script>
+  import { downloadFeedbackExport } from '../lib/feedback-client';
+
+  const btn = document.getElementById('feedback-export');
+  const status = document.getElementById('feedback-export-status');
+  btn?.addEventListener('click', () => {
+    const count = downloadFeedbackExport();
+    if (!status) return;
+    if (count === 0) {
+      status.textContent = 'エクスポートする Good/Bad がありません。記事ページで評価してからお試しください。';
+      return;
+    }
+    status.textContent = `${count} 件を JSONL でダウンロードしました。npm run feedback:merge -- <ファイル> で data/feedback.jsonl に反映できます。`;
+  });
+</script>

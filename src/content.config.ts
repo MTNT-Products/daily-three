@@ -13,6 +13,7 @@ const digest = defineCollection({
         title: z.string(),
         summary: z.string(),
         source: z.string(),
+        sourceId: z.string(),
         url: z.string().url(),
         image: z.string().url().optional(),
       }),

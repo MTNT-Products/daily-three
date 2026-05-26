@@ -269,3 +269,54 @@ main {
 .home-latest:hover {
   border-color: var(--accent);
 }
+
+.home-preview {
+  margin-top: 0.5rem;
+}
+
+.home-preview-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.home-preview-head h2 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.home-preview-link {
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.home-preview-link:hover {
+  text-decoration: underline;
+}
+
+.feedback-export-btn {
+  margin-top: 0.75rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.feedback-export-btn:hover {
+  border-color: var(--accent);
+}
+
+.feedback-export-status {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  max-width: 36rem;
+}

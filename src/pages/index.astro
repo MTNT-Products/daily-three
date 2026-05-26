@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
 import { getCollection } from 'astro:content';
 
 const digests = (await getCollection('digest')).sort(
@@ -15,9 +16,20 @@ const latest = digests[0];
   </div>
   {
     latest ? (
-      <a class="home-latest" href={`${import.meta.env.BASE_URL}digest/${latest.id}/`}>
-        最新: {latest.data.title} →
-      </a>
+      <>
+        <section class="home-preview" aria-labelledby="home-preview-title">
+          <div class="home-preview-head">
+            <h2 id="home-preview-title">今日の3件 — {latest.data.title}</h2>
+            <a class="home-preview-link" href={`${import.meta.env.BASE_URL}digest/${latest.id}/`}>
+              全文を読む →
+            </a>
+          </div>
+          <p class="digest-lead">{latest.data.lead}</p>
+          {latest.data.articles.map((article, index) => (
+            <ArticleCard article={article} index={index} digestSlug={latest.id} />
+          ))}
+        </section>
+      </>
     ) : (
       <p>まだダイジェストがありません。</p>
     )

@@ -9,13 +9,17 @@ export function publishDigest(date: Date, lead: string, articles: DigestArticle[
 
   const jaDate = formatJaDate(date);
   const yamlArticles = articles
-    .map(
-      (a) => `  - title: ${yamlQuote(a.title)}
-    summary: ${yamlQuote(a.summary)}
-    source: ${yamlQuote(a.source)}
-    url: ${yamlQuote(a.url)}
-    image: ${a.image ? yamlQuote(a.image) : '""'}`,
-    )
+    .map((a) => {
+      const lines = [
+        `  - title: ${yamlQuote(a.title)}`,
+        `    summary: ${yamlQuote(a.summary)}`,
+        `    source: ${yamlQuote(a.source)}`,
+        `    sourceId: ${yamlQuote(a.sourceId)}`,
+        `    url: ${yamlQuote(a.url)}`,
+      ];
+      if (a.image) lines.push(`    image: ${yamlQuote(a.image)}`);
+      return lines.join('\n');
+    })
     .join('\n');
 
   const body = `---
