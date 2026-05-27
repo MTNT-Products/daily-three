@@ -7,7 +7,7 @@
 3. Settings → Secrets → Actions に登録:
    - `ANTHROPIC_API_KEY`（本番: Claude Haiku 選定・日本語要約）
    - `SITE_URL` = `https://rhcpgtbd0611-moto.github.io/daily-three`
-   - 任意: `LLM_PROVIDER`（省略時は `anthropic`）, `ANTHROPIC_MODEL`, `RESEND_API_KEY`, `EMAIL_TO`, `EMAIL_FROM`
+   - 任意: `ANTHROPIC_MODEL`, `RESEND_API_KEY`, `EMAIL_TO`, `EMAIL_FROM`
 4. Actions → **Daily Digest and Deploy** → **Run workflow** で確認
 
 公開 URL: https://rhcpgtbd0611-moto.github.io/daily-three/
@@ -55,8 +55,7 @@ gh auth refresh -h github.com -s workflow
 
 ワークフロー実行後、Actions ログで次を確認します。
 
-1. **`Run digest pipeline`** — `[digest] Picker: anthropic (used: anthropic)` と出ること  
-   - `used: rule` の場合は **`ANTHROPIC_API_KEY` が Secrets に未設定**（digest は動くが英語・ルールベースのまま）
+1. **`Run digest pipeline`** — `[digest] Picker: anthropic (model: ...)` と出ること
 2. **`Commit digest and seen URLs`** — 新しい `src/content/digest/YYYY-MM-DD.md` が commit されること
 3. 公開 URL — https://rhcpgtbd0611-moto.github.io/daily-three/ で最新ダイジェストが表示されること
 4. ダイジェスト本文 — `lead` と各記事 `summary` が **日本語** であること
@@ -65,8 +64,6 @@ gh auth refresh -h github.com -s workflow
 
 | 症状 | 根本原因 | 対処 |
 |------|----------|------|
-| `Picker: rule (used: rule)` | Secrets 未設定 or クレジット不足 | Secrets / Anthropic Billing を確認 |
-| `gh workflow run` が HTTP 500 | 表示名の特殊文字 or `gh` に `workflow` スコープ不足 | `npm run workflow:dispatch` または Web UI から実行 |
-| digest 失敗なのに run が success | （修正済）`continue-on-error` で失敗を隠していた | 現在は digest 失敗で run 全体が fail |
-| push したのにサイトが古い | push 用 workflow が digest run に **cancel** されていた（修正済: workflow 分離） | `pages-deploy.yml` が push で自動実行されることを Actions で確認 |
-| 日本語にならない | LLM 応答が markdown 付き JSON | `scripts/rank.ts` の `extractJson`（修正済み） |
+| `ANTHROPIC_API_KEY is required` | Secrets / `.env` 未設定 | キーを登録 |
+| Anthropic API エラー | クレジット不足 or キー無効 | Anthropic Billing / キー再発行 |
+| `Anthropic response missing lead or picks` | LLM 応答の JSON 形式不正 | Actions ログを確認（`extractJson` で大半は吸収済み） |

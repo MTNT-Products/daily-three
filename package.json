@@ -12,17 +12,14 @@
     "preview": "astro preview",
     "digest": "tsx scripts/run-digest.ts",
     "digest:dry": "tsx scripts/run-digest.ts --dry-run",
-    "eval:llm": "tsx scripts/eval-llm.ts",
     "feedback:merge": "tsx scripts/feedback-merge.ts",
     "workflow:dispatch": "powershell -ExecutionPolicy Bypass -File scripts/trigger-workflow.ps1",
     "astro": "astro"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
-    "@google/generative-ai": "^0.24.1",
     "astro": "^6.3.7",
     "cheerio": "^1.2.0",
-    "openai": "^6.39.0",
     "resend": "^6.12.3",
     "rss-parser": "^3.13.0",
     "yaml": "^2.9.0",

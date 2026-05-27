@@ -28,6 +28,6 @@ alwaysApply: true
 
 | 症状 | パッチ | 根本原因 |
 |------|--------|----------|
-| digest が英語のまま | 手元だけ digest | Secrets 未設定 / JSON パース失敗 → 修正 |
+| digest が生成されない | Secrets 未設定で即 fail | `ANTHROPIC_API_KEY` を登録 |
 | workflow 手動実行 500 | UI だけ案内 | workflow 名の `&` と `gh` の相性 → 名前変更 + ID 指定スクリプト |
 | CI 失敗に気づけない | ローカル運用 | `continue-on-error: true` 削除 + ログ確認 |

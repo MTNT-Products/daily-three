@@ -22,7 +22,6 @@ C:\Users\rhcpg\src\daily-three
 npm run dev          # ローカルプレビュー
 npm run digest:dry   # 収集・選定の確認
 npm run digest       # ダイジェスト生成
-npm run eval:llm     # LLM プロバイダ比較
 npm run build        # 静的ビルド
 ```
 
