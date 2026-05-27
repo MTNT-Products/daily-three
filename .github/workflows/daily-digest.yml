@@ -4,8 +4,6 @@ on:
   schedule:
     - cron: '0 23 * * 1-5'
   workflow_dispatch:
-  push:
-    branches: [main]
 
 permissions:
   contents: write
@@ -13,11 +11,11 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: daily-digest
   cancel-in-progress: false
 
 jobs:
-  build-deploy:
+  digest-and-deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -33,7 +31,6 @@ jobs:
       - run: npm ci
 
       - name: Run digest pipeline
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         env:
           LLM_PROVIDER: ${{ secrets.LLM_PROVIDER }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -47,7 +44,6 @@ jobs:
         run: npm run digest
 
       - name: Commit digest and seen URLs
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

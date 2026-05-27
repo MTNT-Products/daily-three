@@ -14,11 +14,12 @@
 
 ## CI の動き
 
-| きっかけ | digest | ビルド + Pages 公開 |
-|----------|--------|---------------------|
-| 平日 schedule（UTC 23:00 ≒ JST 8:00） | 実行 | 実行 |
-| workflow_dispatch（手動） | 実行 | 実行 |
-| `main` への push | スキップ | 実行 |
+2 つの workflow に分離しています（push デプロイが digest 長時間 run に巻き込まれないため）。
+
+| workflow | きっかけ | 内容 |
+|----------|----------|------|
+| **Daily Digest and Deploy** (`daily-digest.yml`) | 平日 schedule / 手動 | digest → commit → build → Pages |
+| **Deploy to GitHub Pages** (`pages-deploy.yml`) | `main` への push | build → Pages のみ（約30秒） |
 
 digest 実行時の流れ:
 
@@ -30,12 +31,12 @@ digest 実行時の流れ:
 
 ## 手動実行（CLI）
 
-workflow 表示名に `&` などが含まれると、PowerShell から `gh workflow run "名前"` が失敗することがあります。**workflow ID 指定**を使います。
+workflow 表示名に `&` などが含まれると、PowerShell から `gh workflow run "名前"` が失敗することがあります。**ファイル名指定**を使います。
 
 ```powershell
 npm run workflow:dispatch
 # または
-gh workflow run 282451376 --ref main
+gh workflow run daily-digest.yml --ref main
 ```
 
 `gh` で dispatch できない場合:
@@ -67,5 +68,5 @@ gh auth refresh -h github.com -s workflow
 | `Picker: rule (used: rule)` | Secrets 未設定 or クレジット不足 | Secrets / Anthropic Billing を確認 |
 | `gh workflow run` が HTTP 500 | 表示名の特殊文字 or `gh` に `workflow` スコープ不足 | `npm run workflow:dispatch` または Web UI から実行 |
 | digest 失敗なのに run が success | （修正済）`continue-on-error` で失敗を隠していた | 現在は digest 失敗で run 全体が fail |
-| push したのにサイトが古い | push run は **ビルドのみ**。digest は schedule/手動のみ | workflow_dispatch を実行、または schedule を待つ |
+| push したのにサイトが古い | push 用 workflow が digest run に **cancel** されていた（修正済: workflow 分離） | `pages-deploy.yml` が push で自動実行されることを Actions で確認 |
 | 日本語にならない | LLM 応答が markdown 付き JSON | `scripts/rank.ts` の `extractJson`（修正済み） |

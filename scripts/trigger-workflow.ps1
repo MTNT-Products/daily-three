@@ -1,14 +1,14 @@
 # Trigger Daily Digest and Deploy on GitHub Actions.
-# Uses workflow ID (not display name) to avoid shell issues with special characters.
+# Uses workflow file name to avoid shell issues with special characters in display names.
 param(
   [string]$Ref = 'main'
 )
 
 $ErrorActionPreference = 'Stop'
-$workflowId = 282451376
+$workflowFile = 'daily-digest.yml'
 
-Write-Host "Triggering workflow $workflowId on ref $Ref ..."
-gh workflow run $workflowId --ref $Ref
+Write-Host "Triggering workflow $workflowFile on ref $Ref ..."
+gh workflow run $workflowFile --ref $Ref
 if ($LASTEXITCODE -ne 0) {
   Write-Error @"
 Failed to dispatch workflow. Common fixes:
@@ -18,4 +18,4 @@ Failed to dispatch workflow. Common fixes:
 }
 
 Start-Sleep -Seconds 3
-gh run list --workflow=$workflowId --limit 1
+gh run list --workflow=$workflowFile --limit 1
