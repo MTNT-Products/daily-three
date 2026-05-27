@@ -1,4 +1,4 @@
-name: Daily Digest & Deploy
+name: Daily Digest and Deploy
 
 on:
   schedule:
@@ -45,7 +45,6 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           SITE_URL: ${{ secrets.SITE_URL }}
         run: npm run digest
-        continue-on-error: true
 
       - name: Commit digest and seen URLs
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
