@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { sitePath } from '../lib/site-url';
 
 interface Props {
   title: string;
@@ -7,7 +8,11 @@ interface Props {
 }
 
 const { title, description = 'Daily Three: Auto & Product Design — 毎日3件のデザインニュース' } = Astro.props;
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const homePath = sitePath('');
+const archivePath = sitePath('archive/');
+const aboutPath = sitePath('about/');
+const pathname = Astro.url.pathname;
+const isHome = pathname === homePath || pathname === homePath.replace(/\/$/, '') || pathname.endsWith('/daily-three/') || pathname.endsWith('/daily-three');
 ---
 
 <!doctype html>
@@ -16,19 +21,19 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
+    <link rel="icon" type="image/svg+xml" href={sitePath('favicon.svg')} />
     <title>{title}</title>
   </head>
   <body>
     <header class="site-header">
-      <a href={`${import.meta.env.BASE_URL}`} style="text-decoration: none; color: inherit">
+      <a href={homePath} style="text-decoration: none; color: inherit">
         <div class="brand">Daily Three</div>
         <div class="tagline">Auto &amp; Product Design</div>
       </a>
       <nav class="site-nav" aria-label="メイン">
-        <a href={`${import.meta.env.BASE_URL}`} aria-current={Astro.url.pathname === '/' || Astro.url.pathname.endsWith('/') ? 'page' : undefined}>Home</a>
-        <a href={`${import.meta.env.BASE_URL}archive/`} aria-current={Astro.url.pathname.includes('/archive') ? 'page' : undefined}>Archive</a>
-        <a href={`${import.meta.env.BASE_URL}about/`} aria-current={Astro.url.pathname.includes('/about') ? 'page' : undefined}>About</a>
+        <a href={homePath} aria-current={pathname.includes('/archive') || pathname.includes('/about') || pathname.includes('/digest') ? undefined : 'page'}>Home</a>
+        <a href={archivePath} aria-current={pathname.includes('/archive') ? 'page' : undefined}>Archive</a>
+        <a href={aboutPath} aria-current={pathname.includes('/about') ? 'page' : undefined}>About</a>
       </nav>
     </header>
     <main>
@@ -36,24 +41,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     </main>
     <footer class="site-footer">
       <p>Daily Three — personal curation for industrial &amp; product design</p>
-      <button type="button" class="feedback-export-btn" id="feedback-export">フィードバックをエクスポート</button>
-      <p class="feedback-export-status" id="feedback-export-status" aria-live="polite"></p>
     </footer>
   </body>
 </html>
-
-<script>
-  import { downloadFeedbackExport } from '../lib/feedback-client';
-
-  const btn = document.getElementById('feedback-export');
-  const status = document.getElementById('feedback-export-status');
-  btn?.addEventListener('click', () => {
-    const count = downloadFeedbackExport();
-    if (!status) return;
-    if (count === 0) {
-      status.textContent = 'エクスポートする Good/Bad がありません。記事ページで評価してからお試しください。';
-      return;
-    }
-    status.textContent = `${count} 件を JSONL でダウンロードしました。npm run feedback:merge -- <ファイル> で data/feedback.jsonl に反映できます。`;
-  });
-</script>

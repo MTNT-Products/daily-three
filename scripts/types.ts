@@ -31,6 +31,11 @@ export interface ScoredArticle extends RawArticle {
   score: number;
 }
 
+export interface ArticleVideo {
+  provider: 'youtube' | 'vimeo' | 'html5';
+  embedUrl: string;
+}
+
 export interface DigestArticle {
   title: string;
   summary: string;
@@ -38,6 +43,8 @@ export interface DigestArticle {
   sourceId: string;
   url: string;
   image?: string;
+  images?: string[];
+  video?: ArticleVideo;
   reason?: string;
 }
 

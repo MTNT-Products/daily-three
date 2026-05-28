@@ -18,6 +18,17 @@ export function publishDigest(date: Date, lead: string, articles: DigestArticle[
         `    url: ${yamlQuote(a.url)}`,
       ];
       if (a.image) lines.push(`    image: ${yamlQuote(a.image)}`);
+      if (a.images && a.images.length > 1) {
+        lines.push('    images:');
+        for (const img of a.images) {
+          lines.push(`      - ${yamlQuote(img)}`);
+        }
+      }
+      if (a.video) {
+        lines.push(`    video:`);
+        lines.push(`      provider: ${yamlQuote(a.video.provider)}`);
+        lines.push(`      embedUrl: ${yamlQuote(a.video.embedUrl)}`);
+      }
       return lines.join('\n');
     })
     .join('\n');

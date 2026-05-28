@@ -2,6 +2,7 @@ import Parser from 'rss-parser';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { RawArticle, SourceConfig } from './types.js';
+import { normalizeImageUrl } from './image-url.js';
 
 const parser = new Parser({ timeout: 15000 });
 const SEEN_PATH = join(process.cwd(), 'data', 'seen-urls.json');
@@ -30,7 +31,9 @@ export async function collectArticles(sources: SourceConfig[]): Promise<RawArtic
           sourceId: source.id,
           sourceName: source.name,
           category: source.category,
-          image: item.enclosure?.url,
+          image: item.enclosure?.url
+            ? normalizeImageUrl(item.enclosure.url, source.id)
+            : undefined,
         });
       }
     } catch (err) {

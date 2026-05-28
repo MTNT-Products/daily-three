@@ -11,11 +11,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <p>同じ関心を持つ方の参考になれば幸いです。各記事は原文へのリンクと出典を明記しています。</p>
     <h2 style="font-size: 1rem; margin: 1.5rem 0 0.5rem">Good / Bad フィードバック</h2>
     <p>
-      各記事の Good / Bad はブラウザに保存されます。フッターの<strong>フィードバックをエクスポート</strong>で
-      JSONL をダウンロードし、リポジトリの <code>data/feedback.jsonl</code> に反映すると、次回の digest 選定でソースの重み付けに使われます。
-    </p>
-    <p>
-      ローカルでマージする場合: <code>npm run feedback:merge -- feedback-export-YYYY-MM-DD.jsonl</code>
+      各記事の Good / Bad は、あなたの端末に紐づく匿名 ID で Supabase に自動保存されます。他の人の評価数は表示されませんが、裏側で集計され、今後の digest 選定の参考に使われます。同じボタンをもう一度押すと評価を取り消せます。
     </p>
   </div>
 </BaseLayout>

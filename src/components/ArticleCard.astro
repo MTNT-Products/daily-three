@@ -1,4 +1,11 @@
 ---
+import ArticleMedia from './ArticleMedia.astro';
+
+interface ArticleVideo {
+  provider: 'youtube' | 'vimeo' | 'html5';
+  embedUrl: string;
+}
+
 interface Article {
   title: string;
   summary: string;
@@ -6,6 +13,8 @@ interface Article {
   sourceId: string;
   url: string;
   image?: string;
+  images?: string[];
+  video?: ArticleVideo;
 }
 
 interface Props {
@@ -14,19 +23,23 @@ interface Props {
   digestSlug: string;
 }
 
-const { article, index, digestSlug } = Astro.props;
+const { article, index } = Astro.props;
 const num = String(index + 1).padStart(2, '0');
-const feedbackId = `${digestSlug}-${index}`;
+const mediaImages =
+  article.images && article.images.length > 0
+    ? article.images
+    : article.image
+      ? [article.image]
+      : [];
 ---
 
 <article class="article-card" data-article-url={article.url}>
-  {
-    article.image ? (
-      <img class="article-img" src={article.image} alt="" loading="lazy" data-fallback />
-    ) : (
-      <div class="article-img placeholder">画像なし</div>
-    )
-  }
+  <ArticleMedia
+    images={mediaImages}
+    video={article.video}
+    sourceId={article.sourceId}
+    priority={index === 0}
+  />
   <div class="article-body">
     <div class="article-num">{num}</div>
     <h2>{article.title}</h2>
@@ -36,57 +49,118 @@ const feedbackId = `${digestSlug}-${index}`;
     </p>
     <div
       class="feedback"
-      data-feedback-id={feedbackId}
-      data-source-id={article.sourceId}
       data-url={article.url}
+      data-source-id={article.sourceId}
     >
-      <button type="button" data-v="good">Good</button>
-      <button type="button" data-v="bad">Bad</button>
+      <button type="button" class="feedback-btn" data-v="good" aria-pressed="false">
+        <span class="feedback-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.96 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
+          </svg>
+        </span>
+        <span class="feedback-label">Good</span>
+      </button>
+      <button type="button" class="feedback-btn" data-v="bad" aria-pressed="false">
+        <span class="feedback-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23 16.41 16.41c.37-.37.59-.86.59-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z" />
+          </svg>
+        </span>
+        <span class="feedback-label">Bad</span>
+      </button>
     </div>
     <p class="feedback-toast" aria-live="polite"></p>
   </div>
 </article>
 
 <script>
-  import { loadFeedback, saveFeedback, type StoredFeedback } from '../lib/feedback-client';
+  import {
+    deleteVote,
+    fetchMyVotes,
+    getSupabaseBrowser,
+    upsertVote,
+    type Verdict,
+  } from '../lib/feedback-client';
 
-  document.querySelectorAll('img[data-fallback]').forEach((img) => {
-    img.addEventListener('error', () => {
-      const div = document.createElement('div');
-      div.className = 'article-img placeholder';
-      div.textContent = '画像を読み込めませんでした';
-      img.replaceWith(div);
+  function setPressed(group: HTMLElement, verdict: Verdict | null) {
+    group.querySelectorAll('.feedback-btn').forEach((btn) => {
+      const v = (btn as HTMLButtonElement).dataset.v;
+      const active = verdict !== null && v === verdict;
+      btn.classList.toggle('is-good', active && v === 'good');
+      btn.classList.toggle('is-bad', active && v === 'bad');
+      btn.classList.toggle('is-pressed', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
-  });
+  }
 
-  document.querySelectorAll('.feedback').forEach((group) => {
-    const el = group as HTMLElement;
-    const id = el.dataset.feedbackId!;
-    const stored = loadFeedback();
-    if (stored[id]) {
-      const btn = el.querySelector(`[data-v="${stored[id].verdict}"]`);
-      btn?.classList.add(stored[id].verdict === 'good' ? 'is-good' : 'is-bad');
+  function flash(btn: HTMLButtonElement) {
+    btn.classList.remove('feedback-pop');
+    void btn.offsetWidth;
+    btn.classList.add('feedback-pop');
+  }
+
+  async function initFeedback() {
+    const groups = [...document.querySelectorAll<HTMLElement>('.feedback')];
+    if (groups.length === 0) return;
+
+    const supabase = getSupabaseBrowser();
+    const urls = groups.map((g) => g.dataset.url!).filter(Boolean);
+
+    let myVotes: Record<string, Verdict> = {};
+    if (supabase) {
+      try {
+        myVotes = await fetchMyVotes(urls);
+      } catch {
+        /* show buttons without state */
+      }
     }
 
-    el.querySelectorAll('button').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const v = (btn as HTMLButtonElement).dataset.v as StoredFeedback['verdict'];
-        const all = loadFeedback();
-        all[id] = {
-          verdict: v,
-          url: el.dataset.url!,
-          sourceId: el.dataset.sourceId!,
-          date: new Date().toISOString().slice(0, 10),
-        };
-        saveFeedback(all);
-        el.querySelectorAll('button').forEach((b) => b.classList.remove('is-good', 'is-bad'));
-        btn.classList.add(v === 'good' ? 'is-good' : 'is-bad');
-        const toast = el.parentElement?.querySelector('.feedback-toast');
-        if (toast) {
-          toast.textContent =
-            '記録しました。フッターの「フィードバックをエクスポート」から JSONL をダウンロードし、data/feedback.jsonl に反映できます。';
-        }
+    groups.forEach((group) => {
+      const url = group.dataset.url!;
+      setPressed(group, myVotes[url] ?? null);
+
+      group.querySelectorAll<HTMLButtonElement>('.feedback-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const v = btn.dataset.v as Verdict;
+          const toast = group.parentElement?.querySelector('.feedback-toast');
+          const current = myVotes[url] ?? null;
+
+          if (!supabase) {
+            if (toast) {
+              toast.textContent =
+                'フィードバックを利用できません。.env の PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY を確認し、npm run dev を再起動してください。';
+            }
+            return;
+          }
+
+          try {
+            if (current === v) {
+              await deleteVote(url);
+              delete myVotes[url];
+              setPressed(group, null);
+              if (toast) toast.textContent = '評価を取り消しました。';
+            } else {
+              await upsertVote({
+                url,
+                sourceId: group.dataset.sourceId!,
+                verdict: v,
+              });
+              myVotes[url] = v;
+              setPressed(group, v);
+              flash(btn);
+              if (toast) toast.textContent = '記録しました。';
+            }
+          } catch (err) {
+            if (toast) {
+              toast.textContent =
+                err instanceof Error ? err.message : '保存に失敗しました。しばらくしてからお試しください。';
+            }
+          }
+        });
       });
     });
-  });
+  }
+
+  initFeedback();
+  document.addEventListener('astro:page-load', initFeedback);
 </script>

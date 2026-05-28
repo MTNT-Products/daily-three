@@ -37,15 +37,18 @@ npm run build
 | `RESEND_API_KEY` | 通知メール（任意） |
 | `EMAIL_TO` | 送信先（任意） |
 | `SITE_URL` | メール内リンク |
+| `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` | Good/Bad（ブラウザ） |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | digest 集計（CI） |
 
-本番の月額目安（月20回 digest）: 約 **¥30**
+本番の月額目安（月20回 digest）: 約 **¥30**（Supabase Free 枠内なら追加料金なし）
 
 ## Good / Bad フィードバック
 
-- サイト上のボタン → ブラウザ `localStorage` に保存
-- フッターの **フィードバックをエクスポート** → JSONL をダウンロード
-- `npm run feedback:merge -- feedback-export-YYYY-MM-DD.jsonl` で `data/feedback.jsonl` にマージ
-- 次回 `npm run digest` のソース重みに反映
+- サイト上の Good / Bad → **Supabase** に自動保存（匿名ログイン・訪問者ごとに1票）
+- 画面上は **自分の選択のみ** 表示（総数は非公開）
+- 次回 `npm run digest` のソース重みに反映（CI は service role で集計）
+
+セットアップ: [docs/SUPABASE.md](docs/SUPABASE.md)
 
 ## UIモック（方式A）
 

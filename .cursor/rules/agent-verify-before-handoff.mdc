@@ -1,0 +1,15 @@
+---
+description: UI変更後はエージェントが build・dev 検証まで完了してから報告する
+alwaysApply: true
+---
+
+# 修正後はエージェントが検証まで完了する
+
+UI・スタイル・フロントの挙動を変えたら、ユーザーに再起動や確認を求めず、エージェント側で検証できるところまで進める。
+
+## Daily Three での最低限
+
+1. `npm run build` 成功
+2. 必要なら `node_modules/.vite` 削除後に `npm run dev` を起動
+3. 生成 HTML または `http://localhost:4321/daily-three/` の応答で、期待するマークアップ（例: `has-carousel`, `article-media-nav`）を確認
+4. ゲート確認や本番デプロイ承認だけユーザーに依頼する

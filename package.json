@@ -8,11 +8,13 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "dev:clean": "node -e \"require('fs').rmSync('node_modules/.vite',{recursive:true,force:true})\" && astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "digest": "tsx scripts/run-digest.ts",
     "digest:dry": "tsx scripts/run-digest.ts --dry-run",
-    "feedback:merge": "tsx scripts/feedback-merge.ts",
+    "images:re-enrich": "tsx scripts/re-enrich-images.ts",
+    "media:re-enrich": "tsx scripts/re-enrich-media.ts",
     "workflow:dispatch": "powershell -ExecutionPolicy Bypass -File scripts/trigger-workflow.ps1",
     "astro": "astro"
   },
@@ -21,6 +23,7 @@
     "astro": "^6.3.7",
     "cheerio": "^1.2.0",
     "resend": "^6.12.3",
+    "@supabase/supabase-js": "^2.49.8",
     "rss-parser": "^3.13.0",
     "yaml": "^2.9.0",
     "zod": "^4.4.3"

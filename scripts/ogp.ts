@@ -1,28 +1,91 @@
 import * as cheerio from 'cheerio';
+import { normalizeImageUrl, pickLargestImageUrl } from './image-url.js';
+import { resolveHeroImage } from './resolve-hero-image.js';
+import { fetchArticleMedia } from './scrape-media.js';
+import type { DigestArticle } from './types.js';
 
-export async function fetchOgpImage(url: string): Promise<string | undefined> {
+const UA = { 'User-Agent': 'DailyThreeBot/0.1' };
+
+function collectOgpImageCandidates($: cheerio.CheerioAPI, pageUrl: string): string[] {
+  const scored: { url: string; score: number }[] = [];
+
+  const add = (raw: string | undefined, widthHint?: number) => {
+    if (!raw?.trim()) return;
+    let url = raw.trim();
+    if (url.startsWith('//')) url = `https:${url}`;
+    if (!url.startsWith('http')) {
+      try {
+        url = new URL(url, pageUrl).href;
+      } catch {
+        return;
+      }
+    }
+    scored.push({ url, score: (widthHint ?? 0) + 1 });
+  };
+
+  $('meta[property="og:image"], meta[property="og:image:url"], meta[name="twitter:image"]').each(
+    (_, el) => {
+      add($(el).attr('content'));
+    },
+  );
+
+  const ogWidth = parseInt($('meta[property="og:image:width"]').attr('content') ?? '', 10);
+  const ogUrl = $('meta[property="og:image"]').attr('content');
+  if (ogUrl && ogWidth > 0) add(ogUrl, ogWidth);
+
+  if (scored.length === 0) return [];
+  return scored.map((s) => s.url);
+}
+
+export async function fetchOgpImage(url: string, sourceId?: string): Promise<string | undefined> {
   try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'DailyThreeBot/0.1' },
-      signal: AbortSignal.timeout(8000),
-    });
+    const res = await fetch(url, { headers: UA, signal: AbortSignal.timeout(10000) });
     if (!res.ok) return undefined;
     const html = await res.text();
     const $ = cheerio.load(html);
-    return (
-      $('meta[property="og:image"]').attr('content') ||
-      $('meta[name="twitter:image"]').attr('content') ||
-      undefined
-    );
+    const candidates = collectOgpImageCandidates($, url);
+    return pickLargestImageUrl(candidates.map((c) => normalizeImageUrl(c, sourceId)));
   } catch {
     return undefined;
   }
 }
 
-export async function enrichImages(articles: { url: string; image?: string }[]) {
-  for (const a of articles) {
-    if (!a.image) {
-      a.image = await fetchOgpImage(a.url);
-    }
+/** Best-effort hero image: site-specific patterns + largest reachable file. */
+export async function enrichHeroImage(article: {
+  url: string;
+  sourceId: string;
+  image?: string;
+}): Promise<string | undefined> {
+  const resolved = await resolveHeroImage(article.url, article.sourceId, article.image);
+  if (resolved) return resolved;
+
+  const ogp = await fetchOgpImage(article.url, article.sourceId);
+  return ogp ?? (article.image ? normalizeImageUrl(article.image, article.sourceId) : undefined);
+}
+
+/** Hero + gallery images + optional video embed. */
+export async function enrichArticleMedia(article: DigestArticle): Promise<DigestArticle> {
+  const hero = (await enrichHeroImage(article)) ?? article.image;
+  const media = await fetchArticleMedia(article.url, article.sourceId, hero);
+
+  let images = media.images;
+  if (hero) {
+    const heroNorm = normalizeImageUrl(hero, article.sourceId);
+    images = [heroNorm, ...images.filter((u) => u !== heroNorm)];
+  }
+  if (images.length === 0 && hero) images = [normalizeImageUrl(hero, article.sourceId)];
+
+  return {
+    ...article,
+    image: images[0],
+    images: images.length > 1 ? images : undefined,
+    video: media.video,
+  };
+}
+
+/** Enrich all articles (hero quality + carousel + video). */
+export async function enrichImages(articles: DigestArticle[]) {
+  for (let i = 0; i < articles.length; i++) {
+    articles[i] = await enrichArticleMedia(articles[i]);
   }
 }

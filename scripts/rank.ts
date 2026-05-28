@@ -1,13 +1,6 @@
-import { readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
-import type {
-  DigestArticle,
-  FeedbackEntry,
-  RawArticle,
-  ScoredArticle,
-  SourcesFile,
-} from './types.js';
+import type { DigestArticle, RawArticle, ScoredArticle, SourcesFile } from './types.js';
 import { getLlmConfig, type LlmConfig } from './llm-config.js';
+import { loadFeedbackWeightsMerged } from './feedback-supabase.js';
 
 const CURATION_SYSTEM = `You curate "Daily Three: Auto & Product Design" for an industrial product designer.
 Pick exactly 3 articles. Prioritize: new model debuts, concept cars, CMF. Penalize: racing, celebrity.
@@ -43,22 +36,8 @@ export function ruleScore(articles: RawArticle[], config: SourcesFile, sourceWei
     .sort((a, b) => b.score - a.score);
 }
 
-export function loadFeedbackWeights(): Record<string, number> {
-  const path = join(process.cwd(), 'data', 'feedback.jsonl');
-  const weights: Record<string, number> = {};
-  if (!existsSync(path)) return weights;
-
-  const lines = readFileSync(path, 'utf-8').trim().split('\n').filter(Boolean);
-  for (const line of lines) {
-    try {
-      const e = JSON.parse(line) as FeedbackEntry;
-      const delta = e.verdict === 'good' ? 0.05 : -0.08;
-      weights[e.sourceId] = (weights[e.sourceId] ?? 1) + delta;
-    } catch {
-      /* skip */
-    }
-  }
-  return weights;
+export async function loadFeedbackWeights(): Promise<Record<string, number>> {
+  return loadFeedbackWeightsMerged();
 }
 
 export function buildSourceWeights(sources: SourcesFile['sources'], feedback: Record<string, number>) {

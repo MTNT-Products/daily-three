@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from '../components/ArticleCard.astro';
+import { sitePath } from '../lib/site-url';
 import { getCollection } from 'astro:content';
 
 const digests = (await getCollection('digest')).sort(
@@ -20,7 +21,7 @@ const latest = digests[0];
         <section class="home-preview" aria-labelledby="home-preview-title">
           <div class="home-preview-head">
             <h2 id="home-preview-title">今日の3件 — {latest.data.title}</h2>
-            <a class="home-preview-link" href={`${import.meta.env.BASE_URL}digest/${latest.id}/`}>
+            <a class="home-preview-link" href={sitePath(`digest/${latest.id}/`)}>
               全文を読む →
             </a>
           </div>

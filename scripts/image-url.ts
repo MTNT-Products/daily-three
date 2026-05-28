@@ -1,0 +1,74 @@
+/** Prefer higher-resolution image URLs when the publisher uses size suffixes in paths. */
+export function normalizeImageUrl(url: string, sourceId?: string): string {
+  let u = url.trim();
+  if (!u) return u;
+
+  // Dezeen thumbnails → drop square size suffix (keep full hero filenames intact)
+  const isDezeenFull =
+    /_dezeen_2364_col_hero|_dezeen_2364_hero|_dezeen_\d+_hero/i.test(u) || /designboom-large/i.test(u);
+  u = u.replace(/_sq-\d+x\d+(?=\.[a-z]+$)/i, '');
+  u = u.replace(/[-_]\d+x\d+(?=\.[a-z]+$)/i, '');
+  u = u.replace(/_col_sq-\d+x\d+/i, '_col');
+  if (!isDezeenFull) {
+    u = u.replace(/_dezeen_\d+_col(?=\.[a-z]+$)/i, '_dezeen_hero_col');
+    u = u.replace(/_dezeen_\d+_sq(?=\.[a-z]+$)/i, '_dezeen_hero');
+  }
+
+  // Designboom embedded sizes
+  u = u.replace(/-700-500x400-/i, '-700-');
+  u = u.replace(/-500x400-/i, '-');
+  u = u.replace(/-(\d{3,4})x(\d{3,4})-(?=[^/]*\.[a-z]+$)/i, '-');
+
+  // Core77
+  u = u.replace(/lead_400/g, 'lead');
+  u = u.replace(/\/thumb\//i, '/');
+
+  if (sourceId?.includes('dezeen') && u.includes('static.dezeen.com') && u.startsWith('http://')) {
+    u = u.replace('http://', 'https://');
+  }
+
+  if (sourceId?.includes('designboom') && u.includes('designboom.com')) {
+    u = u.replace(/-\d{3,4}x\d{3,4}-/gi, '-');
+  }
+
+  return u;
+}
+
+export function scoreImageUrl(url: string): number {
+  let score = 0;
+  const dim = url.match(/(\d{3,4})x(\d{3,4})/);
+  if (dim) score += parseInt(dim[1], 10) * parseInt(dim[2], 10);
+  if (/2364_col_hero|2364_hero|designboom-large/i.test(url)) score += 2_000_000;
+  if (/hero|full|large|original|master/i.test(url)) score += 500_000;
+  if (/thumb|small|sq-\d|500x400|411x411|_sq-|_hero_col\.|designboom-700-/i.test(url)) score -= 200_000;
+  return score;
+}
+
+export function pickLargestImageUrl(candidates: string[]): string | undefined {
+  const normalized = candidates.map((c) => c.trim()).filter(Boolean);
+  if (normalized.length === 0) return undefined;
+
+  let best = normalized[0];
+  let bestScore = scoreImageUrl(best);
+
+  for (let i = 1; i < normalized.length; i++) {
+    const n = normalized[i];
+    const score = scoreImageUrl(n);
+    if (score > bestScore) {
+      best = n;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+/** Pick the higher-scoring of two URLs after normalization. */
+export function pickBetterImageUrl(
+  current: string | undefined,
+  candidate: string | undefined,
+  sourceId?: string,
+): string | undefined {
+  const candidates = [current, candidate].filter(Boolean) as string[];
+  const normalized = candidates.map((c) => normalizeImageUrl(c, sourceId));
+  return pickLargestImageUrl(normalized);
+}

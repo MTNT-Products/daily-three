@@ -2,6 +2,11 @@ import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
+const videoSchema = z.object({
+  provider: z.enum(['youtube', 'vimeo', 'html5']),
+  embedUrl: z.string().url(),
+});
+
 const digest = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/digest' }),
   schema: z.object({
@@ -16,6 +21,8 @@ const digest = defineCollection({
         sourceId: z.string(),
         url: z.string().url(),
         image: z.string().url().optional(),
+        images: z.array(z.string().url()).optional(),
+        video: videoSchema.optional(),
       }),
     ),
   }),

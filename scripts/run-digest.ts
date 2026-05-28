@@ -12,7 +12,7 @@ const dryRun = process.argv.includes('--dry-run');
 
 async function main() {
   const config = parse(readFileSync('sources.yaml', 'utf-8')) as SourcesFile;
-  const feedback = loadFeedbackWeights();
+  const feedback = await loadFeedbackWeights();
   const sourceWeights = buildSourceWeights(config.sources, feedback);
 
   console.log('[digest] Collecting…');

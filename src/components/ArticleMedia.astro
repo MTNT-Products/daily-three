@@ -1,0 +1,118 @@
+---
+interface ArticleVideo {
+  provider: 'youtube' | 'vimeo' | 'html5';
+  embedUrl: string;
+}
+
+interface Props {
+  images: string[];
+  video?: ArticleVideo;
+  sourceId?: string;
+  priority?: boolean;
+}
+
+const { images, video, priority = false } = Astro.props;
+const slides = [...images];
+const slideCount = slides.length + (video ? 1 : 0);
+const hasCarousel = slideCount > 1;
+const uid = `media-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<div class={`article-media${hasCarousel ? ' has-carousel' : ''}`} data-media-id={uid}>
+  <div class="article-media-viewport">
+    {
+      slides.map((src, i) => (
+        <figure class="article-media-slide" data-slide-index={i} hidden={i !== 0 ? true : undefined}>
+          <img
+            class="article-img"
+            src={src}
+            alt=""
+            loading={priority && i === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+            fetchpriority={priority && i === 0 ? 'high' : undefined}
+            data-fallback
+          />
+        </figure>
+      ))
+    }
+    {
+      video ? (
+        <figure
+          class="article-media-slide article-media-video"
+          data-slide-index={slides.length}
+          hidden={slides.length > 0 ? true : undefined}
+        >
+          <iframe
+            src={video.embedUrl}
+            title="動画"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          />
+        </figure>
+      ) : null
+    }
+    {
+      !slides.length && !video ? (
+        <div class="article-img placeholder">画像なし</div>
+      ) : null
+    }
+  </div>
+  {
+    hasCarousel ? (
+      <>
+        <button type="button" class="article-media-nav prev" aria-label="前の画像" data-dir="-1">
+          <span class="article-media-nav-icon" aria-hidden="true">‹</span>
+        </button>
+        <button type="button" class="article-media-nav next" aria-label="次の画像" data-dir="1">
+          <span class="article-media-nav-icon" aria-hidden="true">›</span>
+        </button>
+        <span class="article-media-counter" aria-live="polite">
+          1 / {slideCount}
+        </span>
+      </>
+    ) : null
+  }
+</div>
+
+<script>
+  function initMediaCarousels() {
+    document.querySelectorAll('.article-media.has-carousel').forEach((root) => {
+      const slides = [...root.querySelectorAll('.article-media-slide')];
+      if (slides.length <= 1) return;
+
+      let index = slides.findIndex((s) => !s.hasAttribute('hidden'));
+      if (index < 0) index = 0;
+
+      const counter = root.querySelector('.article-media-counter');
+
+      const show = (i: number) => {
+        index = (i + slides.length) % slides.length;
+        slides.forEach((s, j) => {
+          if (j === index) s.removeAttribute('hidden');
+          else s.setAttribute('hidden', '');
+        });
+        if (counter) counter.textContent = `${index + 1} / ${slides.length}`;
+      };
+
+      root.querySelectorAll('.article-media-nav').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const dir = Number((btn as HTMLButtonElement).dataset.dir ?? 1);
+          show(index + dir);
+        });
+      });
+    });
+
+    document.querySelectorAll('img[data-fallback]').forEach((img) => {
+      img.addEventListener('error', () => {
+        const fig = img.closest('.article-media-slide');
+        if (fig) {
+          fig.innerHTML = '<div class="article-img placeholder">画像を読み込めませんでした</div>';
+        }
+      });
+    });
+  }
+
+  initMediaCarousels();
+  document.addEventListener('astro:page-load', initMediaCarousels);
+</script>
