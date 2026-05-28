@@ -42,6 +42,9 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run digest
 
+      - name: Enrich gallery images for all digests
+        run: npm run media:re-enrich
+
       - name: Commit digest and seen URLs
         run: |
           git config user.name "github-actions[bot]"

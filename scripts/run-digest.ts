@@ -30,6 +30,10 @@ async function main() {
   }
 
   await enrichImages(articles);
+  for (const a of articles) {
+    const n = a.images?.length ?? (a.image ? 1 : 0);
+    console.log(`[digest] media ${a.sourceId}: ${n} image(s)`);
+  }
 
   const now = new Date();
   const siteUrl = process.env.SITE_URL ?? 'https://example.com';

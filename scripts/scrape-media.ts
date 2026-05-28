@@ -30,7 +30,7 @@ export async function fetchArticleMedia(
   if (heroSeed) candidates.push(heroSeed);
 
   if (pageUrl.includes('designboom.com')) {
-    candidates.push(...(await fetchDesignboomCandidates(pageUrl)));
+    candidates.push(...filterDesignboomArticle(pageUrl, await fetchDesignboomCandidates(pageUrl)));
   }
 
   if (sourceId?.includes('dezeen') || pageUrl.includes('dezeen.com')) {
@@ -45,6 +45,16 @@ export async function fetchArticleMedia(
   candidates.push(...page.images);
   const images = await buildGalleryImages(candidates, sourceId, heroSeed);
   return { images, video: page.video };
+}
+
+function filterDesignboomArticle(pageUrl: string, urls: string[]): string[] {
+  const slug = new URL(pageUrl).pathname.split('/').filter(Boolean).pop() ?? '';
+  const tokens = slug.split('-').filter((t) => t.length > 4);
+  const matched = urls.filter((u) => {
+    const file = (u.split('/').pop() ?? '').toLowerCase();
+    return tokens.filter((t) => file.includes(t)).length >= 2;
+  });
+  return matched.length >= 2 ? matched : urls;
 }
 
 function isThumbnailUrl(url: string): boolean {

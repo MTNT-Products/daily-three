@@ -113,13 +113,68 @@ function scoreDesignboomPath(url: string): number {
   return 300_000;
 }
 
+function tokenMatchesSlugToken(token: string, file: string): boolean {
+  const t = token.toLowerCase();
+  if (file.includes(t)) return true;
+  // Slug tokens like "nycxdesign" vs filenames "nyc-design-week"
+  if (t.length >= 4) {
+    for (let n = 3; n <= Math.min(5, t.length); n++) {
+      if (file.includes(t.slice(0, n))) return true;
+    }
+  }
+  return false;
+}
+
 function matchesDezeenArticleSlug(pageUrl: string, imageUrl: string): boolean {
   const slug = new URL(pageUrl).pathname.split('/').filter(Boolean).pop() ?? '';
   const tokens = slug.split('-').filter((t) => t.length > 2);
   const file = (imageUrl.split('/').pop() ?? '').toLowerCase();
-  const hits = tokens.filter((t) => file.includes(t.toLowerCase())).length;
+  const hits = tokens.filter((t) => tokenMatchesSlugToken(t, file)).length;
   const need = Math.min(3, Math.max(2, tokens.length - 2));
   return hits >= need;
+}
+
+/** File stem without size suffix or _dezeen_* tail (for grouping gallery shots). */
+function dezeenFileStem(url: string): string {
+  const file = (url.split('/').pop() ?? '')
+    .replace(/-\d+x\d+(?=\.[a-z]+$)/i, '')
+    .replace(/-scaled(?=\.[a-z]+$)/i, '')
+    .replace(/\.[a-z]+$/i, '');
+  return file.replace(/_dezeen_.*$/i, '');
+}
+
+function collectDezeenUrlsFromChunk(chunk: string): string[] {
+  const found = new Set<string>();
+  for (const m of chunk.matchAll(/https?:\/\/static\.dezeen\.com\/uploads\/[^"'\s<>]+/gi)) {
+    let u = m[0].replace(/^http:/i, 'https:');
+    found.add(u);
+    const base = u.replace(/-\d+x\d+(?=\.[a-z]+$)/i, '').replace(/-scaled(?=\.[a-z]+$)/i, '');
+    if (base !== u) found.add(base);
+  }
+  return [...found];
+}
+
+/** When slug tokens do not appear in filenames, group by the hero image stem at top of RSS item. */
+/** Drop related-article images that slipped through loose slug matching. */
+function tightenDezeenGallery(urls: string[]): string[] {
+  if (urls.length < 2) return urls;
+  const anchorStem = dezeenFileStem(urls[0]);
+  if (!anchorStem) return urls;
+  const tight = urls.filter((u) => dezeenFileStem(u) === anchorStem);
+  return tight.length >= 2 ? tight : urls;
+}
+
+function filterByDominantStem(urls: string[], sampleSize = 50): string[] {
+  const head = urls.slice(0, sampleSize);
+  let anchorStem = '';
+  for (const u of head) {
+    const stem = dezeenFileStem(u);
+    if (!stem) continue;
+    anchorStem = stem;
+    break;
+  }
+  if (!anchorStem) return [];
+  return urls.filter((u) => dezeenFileStem(u) === anchorStem);
 }
 
 /** Dezeen article HTML is often 403; RSS content:encoded still lists full-size WordPress assets. */
@@ -139,17 +194,14 @@ export async function fetchDezeenRssCandidates(pageUrl: string): Promise<string[
     if (itemStart < 0 || itemEnd < 0) return [];
     const chunk = text.slice(itemStart, itemEnd);
 
-    const found = new Set<string>();
-
-    for (const m of chunk.matchAll(/https?:\/\/static\.dezeen\.com\/uploads\/[^"'\s<>]+/gi)) {
-      let u = m[0].replace(/^http:/i, 'https:');
-      if (!matchesDezeenArticleSlug(pageUrl, u)) continue;
-      found.add(u);
-      const base = u.replace(/-\d+x\d+(?=\.[a-z]+$)/i, '').replace(/-scaled(?=\.[a-z]+$)/i, '');
-      if (base !== u) found.add(base);
+    const all = collectDezeenUrlsFromChunk(chunk);
+    let picked = all.filter((u) => matchesDezeenArticleSlug(pageUrl, u));
+    if (picked.length < 2) {
+      picked = filterByDominantStem(all);
     }
+    if (picked.length < 2) picked = all.slice(0, 80);
 
-    return [...found];
+    return tightenDezeenGallery(picked);
   } catch {
     return [];
   }
