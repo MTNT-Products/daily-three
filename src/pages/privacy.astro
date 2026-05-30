@@ -1,0 +1,73 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const updated = '2026-05-29';
+const contactUrl = 'https://github.com/rhcpgtbd0611-moto/daily-three/issues';
+---
+
+<BaseLayout
+  title="プライバシーポリシー — Daily Three"
+  description="Daily Three のプライバシーポリシー。Good/Bad フィードバックと Supabase の取り扱いについて。"
+>
+  <h1 style="font-size: 1.25rem; margin-bottom: 1rem">プライバシーポリシー</h1>
+  <div class="about-prose">
+    <p>
+      <strong>Daily Three</strong>（以下「当サイト」）は、個人によるデザイン関連ニュースのキュレーションサイトです。当サイトでは、訪問者の個人情報を販売したり、広告配信のために第三者トラッキング（Google
+      Analytics 等）を行ったりしません。
+    </p>
+    <p>最終更新日: {updated}</p>
+
+    <h2>1. 運営者</h2>
+    <p>当サイトは個人が運営しています。お問い合わせは GitHub の Issues から受け付けます（<a href={contactUrl}>リポジトリの Issues</a>）。</p>
+
+    <h2>2. 当サイトで扱う情報</h2>
+    <h3>2.1 Good / Bad フィードバック（Supabase）</h3>
+    <p>
+      各記事の Good / Bad ボタンを利用すると、Supabase（データベースサービス）に次の情報が保存されます。
+    </p>
+    <ul>
+      <li>記事の URL</li>
+      <li>ニュースソースの識別子（<code>source_id</code>）</li>
+      <li>Good または Bad の選択</li>
+      <li>匿名ログインにより付与されるユーザー ID（端末・ブラウザごとの識別子。氏名・メールアドレスは取得しません）</li>
+    </ul>
+    <p>
+      画面上では<strong>あなた自身の選択のみ</strong>表示し、他の訪問者の評価数は公開しません。集計結果は、今後の記事選定（digest 生成）の参考に使います。
+    </p>
+    <p>
+      Supabase のサーバーは当サイト運営者が契約したプロジェクト上にあります。ブラウザから送る通信には、公開用の API キー（<code>PUBLIC_SUPABASE_*</code>）を使い、データベース側の行レベルセキュリティ（RLS）でアクセスを制限しています。
+    </p>
+
+    <h3>2.2 アクセスログ（ホスティング）</h3>
+    <p>
+      当サイトは GitHub Pages 上で公開しています。ホスティング事業者の標準的なアクセスログ（IP アドレス、ブラウザ種別、リクエスト日時など）が記録される場合があります。当サイト運営者が Google Analytics 等の解析ツールを埋め込んでいる場合はありません。
+    </p>
+
+    <h3>2.3 収集しないもの</h3>
+    <ul>
+      <li>氏名、住所、電話番号、メールアドレス（お問い合わせを除く）</li>
+      <li>広告用 Cookie や行動ターゲティング用の識別子</li>
+      <li>クレジットカード番号などの決済情報（当サイトの HTML フォームでは決済を受け付けません）</li>
+    </ul>
+
+    <h3>2.4 任意のサイト運営支援（Buy Me a Coffee）</h3>
+    <p>
+      About ページやフッターから、任意で <strong>Buy Me a Coffee</strong>（外部の投げ銭サービス）へ移動できます。支援を選んだ場合、決済・個人情報の入力は <strong>Buy Me a Coffee 側</strong>で行われ、当サイトはカード情報等を保存しません。支援の有無によってコンテンツの閲覧可否が変わることはありません。
+    </p>
+
+    <h2>3. 外部サイトへのリンク</h2>
+    <p>
+      各 digest 記事から、元ニュースサイトなど<strong>外部サイト</strong>へリンクしています。外部サイトでのデータの取り扱いは、各サイトのポリシーに従います。
+    </p>
+
+    <h2>4. 保存期間</h2>
+    <p>
+      Good / Bad のデータは、運営上必要な期間 Supabase 上に保持します。不要と判断した場合は削除します。
+    </p>
+
+    <h2>5. お問い合わせ</h2>
+    <p>
+      本ポリシーに関するお問い合わせは、<a href={contactUrl}>GitHub Issues</a> からお願いします。
+    </p>
+  </div>
+</BaseLayout>

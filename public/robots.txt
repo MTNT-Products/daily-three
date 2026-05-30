@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rhcpgtbd0611-moto.github.io/daily-three/sitemap-index.xml

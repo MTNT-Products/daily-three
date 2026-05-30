@@ -345,6 +345,37 @@ main {
   margin-top: 1rem;
 }
 
+.about-prose h2 {
+  font-size: 1rem;
+  margin: 1.5rem 0 0.5rem;
+  color: var(--text, inherit);
+}
+
+.about-prose h3 {
+  font-size: 0.9rem;
+  margin: 1rem 0 0.35rem;
+  color: var(--text, inherit);
+}
+
+.about-prose ul {
+  margin: 0.5rem 0 0 1.25rem;
+  padding: 0;
+}
+
+.about-prose li + li {
+  margin-top: 0.35rem;
+}
+
+.about-prose a {
+  color: var(--accent);
+}
+
+.about-muted {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
 .site-footer {
   text-align: center;
   padding: 2rem 1rem;
@@ -352,6 +383,19 @@ main {
   color: var(--muted);
   border-top: 1px solid var(--border);
   margin-top: 2rem;
+}
+
+.site-footer-nav {
+  margin-top: 0.75rem;
+}
+
+.site-footer-nav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.site-footer-nav a:hover {
+  color: var(--accent);
 }
 
 .home-hero {

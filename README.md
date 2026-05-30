@@ -50,6 +50,11 @@ npm run build
 
 セットアップ: [docs/SUPABASE.md](docs/SUPABASE.md)
 
+## セキュリティ
+
+API キーの扱い・漏洩時の手順: [docs/SECURITY.md](docs/SECURITY.md)  
+push / PR 時は [gitleaks](https://github.com/gitleaks/gitleaks) ワークフロー（[`.github/workflows/gitleaks.yml`](.github/workflows/gitleaks.yml)）で秘密情報の混入を検知します。
+
 ## UIモック（方式A）
 
 `mockups/compare.html` — 採用前の4案比較。本番は**案C**。
@@ -59,6 +64,10 @@ npm run build
 リポジトリ: https://github.com/rhcpgtbd0611-moto/daily-three
 
 手順の詳細: [docs/DEPLOY.md](docs/DEPLOY.md)
+
+検索登録（Google Search Console）: [docs/SEARCH-CONSOLE.md](docs/SEARCH-CONSOLE.md)
+
+任意の運営支援（Buy Me a Coffee）: [docs/SUPPORT.md](docs/SUPPORT.md) — Secret `PUBLIC_BMC_URL`
 
 1. Settings → Pages → Source: **GitHub Actions**
 2. Secrets に `ANTHROPIC_API_KEY`, `SITE_URL` 等を登録（詳細は [docs/DEPLOY.md](docs/DEPLOY.md)）

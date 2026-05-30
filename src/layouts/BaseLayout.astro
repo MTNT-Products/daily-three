@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { sitePath } from '../lib/site-url';
+import SupportLink from '../components/SupportLink.astro';
 
 interface Props {
   title: string;
@@ -11,8 +12,20 @@ const { title, description = 'Daily Three: Auto & Product Design — 毎日3件�
 const homePath = sitePath('');
 const archivePath = sitePath('archive/');
 const aboutPath = sitePath('about/');
+const privacyPath = sitePath('privacy/');
+const disclaimerPath = sitePath('disclaimer/');
 const pathname = Astro.url.pathname;
-const isHome = pathname === homePath || pathname === homePath.replace(/\/$/, '') || pathname.endsWith('/daily-three/') || pathname.endsWith('/daily-three');
+const isHome =
+  pathname === homePath ||
+  pathname === homePath.replace(/\/$/, '') ||
+  pathname.endsWith('/daily-three/') ||
+  pathname.endsWith('/daily-three');
+const isSubpage =
+  pathname.includes('/archive') ||
+  pathname.includes('/about') ||
+  pathname.includes('/digest') ||
+  pathname.includes('/privacy') ||
+  pathname.includes('/disclaimer');
 ---
 
 <!doctype html>
@@ -31,7 +44,7 @@ const isHome = pathname === homePath || pathname === homePath.replace(/\/$/, '')
         <div class="tagline">Auto &amp; Product Design</div>
       </a>
       <nav class="site-nav" aria-label="メイン">
-        <a href={homePath} aria-current={pathname.includes('/archive') || pathname.includes('/about') || pathname.includes('/digest') ? undefined : 'page'}>Home</a>
+        <a href={homePath} aria-current={isSubpage ? undefined : 'page'}>Home</a>
         <a href={archivePath} aria-current={pathname.includes('/archive') ? 'page' : undefined}>Archive</a>
         <a href={aboutPath} aria-current={pathname.includes('/about') ? 'page' : undefined}>About</a>
       </nav>
@@ -41,6 +54,15 @@ const isHome = pathname === homePath || pathname === homePath.replace(/\/$/, '')
     </main>
     <footer class="site-footer">
       <p>Daily Three — personal curation for industrial &amp; product design</p>
+      <nav class="site-footer-nav" aria-label="法務・ポリシー・支援">
+        <a href={privacyPath}>プライバシーポリシー</a>
+        <span aria-hidden="true"> · </span>
+        <a href={disclaimerPath}>免責事項</a>
+        <span class="site-footer-support">
+          <span aria-hidden="true"> · </span>
+          <SupportLink />
+        </span>
+      </nav>
     </footer>
   </body>
 </html>
