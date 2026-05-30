@@ -398,6 +398,30 @@ main {
   color: var(--accent);
 }
 
+.lang-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.lang-switcher-link {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+}
+
+.lang-switcher-link:hover {
+  color: var(--accent);
+}
+
+.lang-switcher-link.is-current {
+  color: var(--text, inherit);
+  font-weight: 600;
+}
+
 .home-hero {
   text-align: center;
   padding: 1rem 0 2rem;

@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { privacyMeta, privacySections } from '../i18n/legal/privacy';
+import type { Locale } from '../i18n/ui';
+
+const locale = Astro.currentLocale as Locale;
+const meta = privacyMeta(locale);
+const sections = privacySections(locale);
+---
+
+<BaseLayout title={meta.title} description={meta.description} path="privacy/">
+  <h1 style="font-size: 1.25rem; margin-bottom: 1rem">{meta.h1}</h1>
+  <div class="about-prose">
+    {
+      sections.map((s) => (
+        <>
+          {s.h2 && <h2>{s.h2}</h2>}
+          {s.h3 && <h3>{s.h3}</h3>}
+          <div set:html={s.html} />
+        </>
+      ))
+    }
+  </div>
+</BaseLayout>

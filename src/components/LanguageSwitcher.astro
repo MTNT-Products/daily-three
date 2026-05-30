@@ -1,0 +1,49 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { t, type Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  /** Path without locale prefix, e.g. `digest/2026-05-27/` */
+  path?: string;
+  alternateLocales?: Locale[];
+}
+
+const { locale, path = '', alternateLocales = ['ja', 'en'] } = Astro.props;
+const currentPath = path.replace(/^\//, '');
+---
+
+<nav class="lang-switcher" aria-label={t(locale, 'langSwitcherAria')}>
+  {
+    alternateLocales.map((loc) => {
+      const href = getRelativeLocaleUrl(loc, currentPath);
+      const isCurrent = loc === locale;
+      return (
+        <a
+          href={href}
+          hreflang={loc}
+          class:list={['lang-switcher-link', { 'is-current': isCurrent }]}
+          aria-current={isCurrent ? 'page' : undefined}
+          data-set-lang={loc}
+        >
+          {loc === 'ja' ? t(locale, 'langJa') : t(locale, 'langEn')}
+        </a>
+      );
+    })
+  }
+</nav>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('[data-set-lang]').forEach((a) => {
+    a.addEventListener('click', () => {
+      const loc = a.dataset.setLang;
+      if (loc === 'ja' || loc === 'en') {
+        try {
+          localStorage.setItem('dt_lang', loc);
+        } catch {
+          /* private mode */
+        }
+      }
+    });
+  });
+</script>

@@ -2,12 +2,19 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DigestArticle } from './types.js';
 
-export function publishDigest(date: Date, lead: string, articles: DigestArticle[]) {
+export type PublishLocale = 'ja' | 'en';
+
+export function publishDigest(
+  date: Date,
+  locale: PublishLocale,
+  lead: string,
+  articles: DigestArticle[],
+) {
   const slug = date.toISOString().slice(0, 10);
-  const dir = join(process.cwd(), 'src', 'content', 'digest');
+  const dir = join(process.cwd(), 'src', 'content', 'digest', locale);
   mkdirSync(dir, { recursive: true });
 
-  const jaDate = formatJaDate(date);
+  const displayTitle = formatDisplayDate(date, locale);
   const yamlArticles = articles
     .map((a) => {
       const lines = [
@@ -34,7 +41,7 @@ export function publishDigest(date: Date, lead: string, articles: DigestArticle[
     .join('\n');
 
   const body = `---
-title: ${yamlQuote(jaDate)}
+title: ${yamlQuote(displayTitle)}
 date: ${slug}
 lead: ${yamlQuote(lead)}
 articles:
@@ -53,7 +60,15 @@ function yamlQuote(s: string) {
   return `"${escaped}"`;
 }
 
-function formatJaDate(d: Date) {
-  const days = ['日', '月', '火', '水', '木', '金', '土'];
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${days[d.getDay()]}）`;
+function formatDisplayDate(d: Date, locale: PublishLocale) {
+  if (locale === 'ja') {
+    const days = ['日', '月', '火', '水', '木', '金', '土'];
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${days[d.getDay()]}）`;
+  }
+  return d.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 }

@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { disclaimerMeta, disclaimerSections } from '../i18n/legal/disclaimer';
+import type { Locale } from '../i18n/ui';
+
+const locale = Astro.currentLocale as Locale;
+const meta = disclaimerMeta(locale);
+const sections = disclaimerSections(locale);
+---
+
+<BaseLayout title={meta.title} description={meta.description} path="disclaimer/">
+  <h1 style="font-size: 1.25rem; margin-bottom: 1rem">{meta.h1}</h1>
+  <div class="about-prose">
+    {
+      sections.map((s) => (
+        <>
+          {s.h2 && <h2>{s.h2}</h2>}
+          <div set:html={s.html} />
+        </>
+      ))
+    }
+  </div>
+</BaseLayout>

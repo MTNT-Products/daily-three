@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daily Three</title>
+    <script>
+      (function () {
+        var base = '/daily-three/';
+        var stored = null;
+        try {
+          stored = localStorage.getItem('dt_lang');
+        } catch (e) {}
+        var langs = navigator.language || '';
+        var preferJa = /^ja/i.test(langs);
+        var loc = stored === 'ja' || stored === 'en' ? stored : preferJa ? 'ja' : 'en';
+        location.replace(base + loc + '/');
+      })();
+    </script>
+    <meta http-equiv="refresh" content="0;url=/daily-three/en/" />
+  </head>
+  <body>
+    <p style="font-family: system-ui; text-align: center; padding: 2rem">
+      <a href="/daily-three/en/">Daily Three</a>
+    </p>
+  </body>
+</html>

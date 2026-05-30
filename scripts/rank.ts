@@ -4,7 +4,21 @@ import { loadFeedbackWeightsMerged } from './feedback-supabase.js';
 
 const CURATION_SYSTEM = `You curate "Daily Three: Auto & Product Design" for an industrial product designer.
 Pick exactly 3 articles. Prioritize: new model debuts, concept cars, CMF. Penalize: racing, celebrity.
-Output JSON: { "lead": "2 sentences in Japanese, editorial tone", "picks": [ { "index": number, "titleJa": "...", "summaryJa": "3-5 lines Japanese with designer lens", "reason": "one line" } ] }
+Output JSON only:
+{
+  "leadJa": "2 sentences in Japanese, editorial tone",
+  "leadEn": "2 sentences in English, editorial tone (write as native English, not a translation of leadJa)",
+  "picks": [
+    {
+      "index": number,
+      "titleJa": "...",
+      "summaryJa": "3-5 lines Japanese with designer lens",
+      "titleEn": "...",
+      "summaryEn": "3-5 lines English with designer lens (native English, not translated from summaryJa)",
+      "reason": "one line"
+    }
+  ]
+}
 Exactly 3 picks. Flexible car vs product ratio by quality.`;
 
 export function ruleScore(articles: RawArticle[], config: SourcesFile, sourceWeights: Record<string, number>): ScoredArticle[] {
@@ -60,22 +74,42 @@ function buildPayload(top: ScoredArticle[]) {
   }));
 }
 
-type LlmJson = { lead: string; picks: { index: number; titleJa: string; summaryJa: string }[] };
+type LlmPick = {
+  index: number;
+  titleJa: string;
+  summaryJa: string;
+  titleEn: string;
+  summaryEn: string;
+};
 
-function mapPicks(top: ScoredArticle[], parsed: LlmJson): { lead: string; articles: DigestArticle[] } {
+type LlmJson = { leadJa: string; leadEn: string; picks: LlmPick[] };
+
+export type DigestLocaleBundle = { lead: string; articles: DigestArticle[] };
+
+export type BilingualDigest = { ja: DigestLocaleBundle; en: DigestLocaleBundle };
+
+function mapPicks(top: ScoredArticle[], parsed: LlmJson, locale: 'ja' | 'en'): DigestLocaleBundle {
+  const lead = locale === 'ja' ? parsed.leadJa : parsed.leadEn;
   const articles: DigestArticle[] = parsed.picks.slice(0, 3).map((p) => {
     const src = top[p.index];
     if (!src) throw new Error(`Invalid pick index: ${p.index}`);
     return {
-      title: p.titleJa,
-      summary: p.summaryJa,
+      title: locale === 'ja' ? p.titleJa : p.titleEn,
+      summary: locale === 'ja' ? p.summaryJa : p.summaryEn,
       source: src.sourceName,
       sourceId: src.sourceId,
       url: src.url,
       image: src.image,
     };
   });
-  return { lead: parsed.lead, articles };
+  return { lead, articles };
+}
+
+function mapBilingualPicks(top: ScoredArticle[], parsed: LlmJson): BilingualDigest {
+  return {
+    ja: mapPicks(top, parsed, 'ja'),
+    en: mapPicks(top, parsed, 'en'),
+  };
 }
 
 function extractJson(raw: string): string {
@@ -87,15 +121,20 @@ function extractJson(raw: string): string {
   return raw.trim();
 }
 
-function parseLlmJson(raw: string, top: ScoredArticle[]): { lead: string; articles: DigestArticle[] } {
+function parseLlmJson(raw: string, top: ScoredArticle[]): BilingualDigest {
   const parsed = JSON.parse(extractJson(raw)) as LlmJson;
-  if (!parsed.lead || !Array.isArray(parsed.picks)) {
-    throw new Error('Anthropic response missing lead or picks');
+  if (!parsed.leadJa || !parsed.leadEn || !Array.isArray(parsed.picks)) {
+    throw new Error('Anthropic response missing leadJa, leadEn, or picks');
   }
-  return mapPicks(top, parsed);
+  for (const p of parsed.picks.slice(0, 3)) {
+    if (!p.titleEn?.trim() || !p.summaryEn?.trim() || !p.titleJa?.trim() || !p.summaryJa?.trim()) {
+      throw new Error('Anthropic pick missing bilingual title or summary');
+    }
+  }
+  return mapBilingualPicks(top, parsed);
 }
 
-async function pickWithAnthropic(top: ScoredArticle[], config: LlmConfig): Promise<{ lead: string; articles: DigestArticle[] }> {
+async function pickWithAnthropic(top: ScoredArticle[], config: LlmConfig): Promise<BilingualDigest> {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey: config.anthropicApiKey });
   const res = await client.messages.create({
@@ -111,14 +150,26 @@ async function pickWithAnthropic(top: ScoredArticle[], config: LlmConfig): Promi
   return parseLlmJson(raw, top);
 }
 
-/** Pick top 3 using Claude Haiku. Requires ANTHROPIC_API_KEY. */
+/** Pick top 3 with ja+en summaries (one Anthropic call). Requires ANTHROPIC_API_KEY. */
+export async function pickTop3Bilingual(
+  candidates: ScoredArticle[],
+  config: LlmConfig = getLlmConfig(),
+): Promise<BilingualDigest> {
+  const top = candidates.slice(0, 20);
+  if (top.length === 0) {
+    return {
+      ja: { lead: '本日は候補がありませんでした。', articles: [] },
+      en: { lead: 'No candidates today.', articles: [] },
+    };
+  }
+  return pickWithAnthropic(top, config);
+}
+
+/** @deprecated Use pickTop3Bilingual */
 export async function pickTop3(
   candidates: ScoredArticle[],
   config: LlmConfig = getLlmConfig(),
-): Promise<{ lead: string; articles: DigestArticle[] }> {
-  const top = candidates.slice(0, 20);
-  if (top.length === 0) {
-    return { lead: '本日は候補がありませんでした。', articles: [] };
-  }
-  return pickWithAnthropic(top, config);
+): Promise<DigestLocaleBundle> {
+  const { ja } = await pickTop3Bilingual(candidates, config);
+  return ja;
 }

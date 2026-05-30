@@ -1,0 +1,34 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getSupportUrl } from '../lib/support';
+import { aboutMeta, aboutSections } from '../i18n/about';
+import { t, type Locale } from '../i18n/ui';
+
+const locale = Astro.currentLocale as Locale;
+const supportUrl = getSupportUrl();
+const copy = aboutSections(locale);
+const meta = aboutMeta(locale);
+---
+
+<BaseLayout title={meta.title} path="about/">
+  <h1 style="font-size: 1.25rem; margin-bottom: 1rem">{t(locale, 'aboutTitle')}</h1>
+  <div class="about-prose">
+    {copy.intro.map((p) => <p set:html={p} />)}
+    <h2 style="font-size: 1rem; margin: 1.5rem 0 0.5rem">{copy.supportTitle}</h2>
+    {copy.supportBody.map((p) => <p set:html={p} />)}
+    {
+      supportUrl ? (
+        <p>
+          <a href={supportUrl} target="_blank" rel="noopener noreferrer">
+            {copy.supportLink}
+          </a>
+          {copy.supportExternal}
+        </p>
+      ) : (
+        <p class="about-muted">{copy.supportPending}</p>
+      )
+    }
+    <h2 style="font-size: 1rem; margin: 1.5rem 0 0.5rem">{copy.feedbackTitle}</h2>
+    <p>{copy.feedbackBody}</p>
+  </div>
+</BaseLayout>

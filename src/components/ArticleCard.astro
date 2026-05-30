@@ -17,13 +17,16 @@ interface Article {
   video?: ArticleVideo;
 }
 
+import { t, type Locale } from '../i18n/ui';
+
 interface Props {
   article: Article;
   index: number;
   digestSlug: string;
+  locale: Locale;
 }
 
-const { article, index } = Astro.props;
+const { article, index, locale } = Astro.props;
 const num = String(index + 1).padStart(2, '0');
 const mediaImages =
   article.images && article.images.length > 0
@@ -45,12 +48,16 @@ const mediaImages =
     <h2>{article.title}</h2>
     <p class="summary">{article.summary}</p>
     <p class="source-line">
-      出典: <a href={article.url} target="_blank" rel="noopener noreferrer">{article.source}</a>
+      {t(locale, 'sourceLabel')}: <a href={article.url} target="_blank" rel="noopener noreferrer">{article.source}</a>
     </p>
     <div
       class="feedback"
       data-url={article.url}
       data-source-id={article.sourceId}
+      data-msg-unavailable={t(locale, 'feedbackUnavailable')}
+      data-msg-cleared={t(locale, 'feedbackCleared')}
+      data-msg-saved={t(locale, 'feedbackSaved')}
+      data-msg-failed={t(locale, 'feedbackFailed')}
     >
       <button type="button" class="feedback-btn" data-v="good" aria-pressed="false">
         <span class="feedback-icon" aria-hidden="true">
@@ -126,10 +133,7 @@ const mediaImages =
           const current = myVotes[url] ?? null;
 
           if (!supabase) {
-            if (toast) {
-              toast.textContent =
-                'フィードバックを利用できません。.env の PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY を確認し、npm run dev を再起動してください。';
-            }
+            if (toast) toast.textContent = group.dataset.msgUnavailable ?? '';
             return;
           }
 
@@ -138,7 +142,7 @@ const mediaImages =
               await deleteVote(url);
               delete myVotes[url];
               setPressed(group, null);
-              if (toast) toast.textContent = '評価を取り消しました。';
+              if (toast) toast.textContent = group.dataset.msgCleared ?? '';
             } else {
               await upsertVote({
                 url,
@@ -148,12 +152,12 @@ const mediaImages =
               myVotes[url] = v;
               setPressed(group, v);
               flash(btn);
-              if (toast) toast.textContent = '記録しました。';
+              if (toast) toast.textContent = group.dataset.msgSaved ?? '';
             }
           } catch (err) {
             if (toast) {
               toast.textContent =
-                err instanceof Error ? err.message : '保存に失敗しました。しばらくしてからお試しください。';
+                err instanceof Error ? err.message : (group.dataset.msgFailed ?? '');
             }
           }
         });

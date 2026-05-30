@@ -1,0 +1,38 @@
+---
+/** Legacy: /daily-three/digest/YYYY-MM-DD/ → /ja|en/digest/... */
+import { getCollection } from 'astro:content';
+import { sitePath } from '../../lib/site-url';
+
+export async function getStaticPaths() {
+  const digests = await getCollection('digest');
+  return digests
+    .filter((e) => e.id.startsWith('ja/'))
+    .map((e) => ({ params: { slug: e.id.replace(/^ja\//, '') } }));
+}
+
+const safeSlug = (Astro.params.slug ?? '').replace(/[^0-9-]/g, '');
+const base = sitePath('');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirect — Daily Three</title>
+    <script is:inline define:vars={{ base, safeSlug }}>
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem('dt_lang');
+        } catch (e) {}
+        var loc = stored === 'en' ? 'en' : 'ja';
+        location.replace(base + loc + '/digest/' + safeSlug + '/');
+      })();
+    </script>
+  </head>
+  <body>
+    <p>
+      <a href={`${base}ja/digest/${safeSlug}/`}>Daily Three</a>
+    </p>
+  </body>
+</html>

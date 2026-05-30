@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import { localePath } from '../lib/site-url';
+import { digestSlugFromEntryId, getDigestsForLocale } from '../lib/digest';
+import { t, type Locale } from '../i18n/ui';
+
+const locale = Astro.currentLocale as Locale;
+const digests = await getDigestsForLocale(locale);
+const latest = digests[0];
+const latestSlug = latest ? digestSlugFromEntryId(latest.id) : '';
+---
+
+<BaseLayout title="Daily Three — Auto & Product Design" path="">
+  <div class="home-hero">
+    <h1>{t(locale, 'homeTitle')}</h1>
+    <p>{t(locale, 'homeSubtitle')}</p>
+  </div>
+  {
+    latest ? (
+      <section class="home-preview" aria-labelledby="home-preview-title">
+        <div class="home-preview-head">
+          <h2 id="home-preview-title">
+            {t(locale, 'homePreview')} — {latest.data.title}
+          </h2>
+          <a class="home-preview-link" href={localePath(locale, `digest/${latestSlug}/`)}>
+            {t(locale, 'homeReadFull')}
+          </a>
+        </div>
+        <p class="digest-lead">{latest.data.lead}</p>
+        {latest.data.articles.map((article, index) => (
+          <ArticleCard article={article} index={index} digestSlug={latestSlug} locale={locale} />
+        ))}
+      </section>
+    ) : (
+      <p>{t(locale, 'homeEmpty')}</p>
+    )
+  }
+</BaseLayout>

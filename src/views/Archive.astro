@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { localePath } from '../lib/site-url';
+import { digestSlugFromEntryId, getDigestsForLocale } from '../lib/digest';
+import { t, type Locale } from '../i18n/ui';
+
+const locale = Astro.currentLocale as Locale;
+const digests = await getDigestsForLocale(locale);
+---
+
+<BaseLayout title={`${t(locale, 'archiveTitle')} — Daily Three`} path="archive/">
+  <h1 style="font-size: 1.25rem; margin-bottom: 1rem">{t(locale, 'archiveTitle')}</h1>
+  <ul class="archive-list">
+    {
+      digests.map((d) => {
+        const slug = digestSlugFromEntryId(d.id);
+        return (
+          <li>
+            <a href={localePath(locale, `digest/${slug}/`)}>{d.data.title}</a>
+          </li>
+        );
+      })
+    }
+  </ul>
+</BaseLayout>

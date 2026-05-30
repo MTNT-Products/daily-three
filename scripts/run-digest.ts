@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { collectArticles, markSeen } from './collect.js';
-import { buildSourceWeights, loadFeedbackWeights, pickTop3, ruleScore } from './rank.js';
+import { buildSourceWeights, loadFeedbackWeights, pickTop3Bilingual, ruleScore } from './rank.js';
 import { getLlmConfig } from './llm-config.js';
 import { publishDigest } from './publish.js';
 import { enrichImages } from './ogp.js';
@@ -21,33 +21,50 @@ async function main() {
 
   const scored = ruleScore(raw, config, sourceWeights);
   const llmConfig = getLlmConfig();
-  const { lead, articles } = await pickTop3(scored, llmConfig);
-  console.log(`[digest] Picker: anthropic (model: ${llmConfig.anthropicModel})`);
+  const { ja, en } = await pickTop3Bilingual(scored, llmConfig);
+  console.log(`[digest] Picker: anthropic bilingual (model: ${llmConfig.anthropicModel})`);
 
-  if (articles.length === 0) {
+  if (ja.articles.length === 0) {
     console.log('[digest] No articles to publish');
     return;
   }
 
-  await enrichImages(articles);
-  for (const a of articles) {
+  await enrichImages(ja.articles);
+  for (let i = 0; i < en.articles.length; i++) {
+    en.articles[i].image = ja.articles[i]?.image;
+    en.articles[i].images = ja.articles[i]?.images;
+    en.articles[i].video = ja.articles[i]?.video;
+  }
+  for (const a of ja.articles) {
     const n = a.images?.length ?? (a.image ? 1 : 0);
     console.log(`[digest] media ${a.sourceId}: ${n} image(s)`);
   }
 
   const now = new Date();
-  const siteUrl = process.env.SITE_URL ?? 'https://example.com';
+  const siteBase = process.env.SITE_URL ?? 'https://example.com';
+  const siteUrlJa = `${siteBase.replace(/\/$/, '')}/ja/`;
 
   if (dryRun) {
-    console.log(JSON.stringify({ lead, articles }, null, 2));
+    console.log(JSON.stringify({ ja, en }, null, 2));
     return;
   }
 
-  const path = publishDigest(now, lead, articles);
-  console.log('[digest] Wrote', path);
+  const pathJa = publishDigest(now, 'ja', ja.lead, ja.articles);
+  console.log('[digest] Wrote', pathJa);
 
-  markSeen(articles.map((a) => a.url));
-  await sendDigestEmail(articles, lead, siteUrl, now.toISOString().slice(0, 10));
+  if (en.articles.length === 3 && en.lead?.trim()) {
+    try {
+      const pathEn = publishDigest(now, 'en', en.lead, en.articles);
+      console.log('[digest] Wrote', pathEn);
+    } catch (e) {
+      console.warn('[digest] English publish skipped:', e);
+    }
+  } else {
+    console.warn('[digest] English publish skipped (incomplete en content)');
+  }
+
+  markSeen(ja.articles.map((a) => a.url));
+  await sendDigestEmail(ja.articles, ja.lead, siteUrlJa, now.toISOString().slice(0, 10));
 }
 
 main().catch((e) => {

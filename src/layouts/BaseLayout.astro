@@ -1,66 +1,78 @@
 ---
 import '../styles/global.css';
-import { sitePath } from '../lib/site-url';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { localePath, sitePath } from '../lib/site-url';
 import SupportLink from '../components/SupportLink.astro';
+import LanguageSwitcher from '../components/LanguageSwitcher.astro';
+import { t, type Locale } from '../i18n/ui';
 
 interface Props {
   title: string;
   description?: string;
+  /** Path without locale, e.g. `digest/2026-05-27/` */
+  path?: string;
+  alternateLocales?: Locale[];
 }
 
-const { title, description = 'Daily Three: Auto & Product Design — 毎日3件のデザインニュース' } = Astro.props;
-const homePath = sitePath('');
-const archivePath = sitePath('archive/');
-const aboutPath = sitePath('about/');
-const privacyPath = sitePath('privacy/');
-const disclaimerPath = sitePath('disclaimer/');
+const locale = Astro.currentLocale as Locale;
+const { title, description, path = '', alternateLocales = ['ja', 'en'] } = Astro.props;
+const desc = description ?? t(locale, 'siteDescription');
+const homePath = localePath(locale);
+const archivePath = localePath(locale, 'archive/');
+const aboutPath = localePath(locale, 'about/');
+const privacyPath = localePath(locale, 'privacy/');
+const disclaimerPath = localePath(locale, 'disclaimer/');
 const pathname = Astro.url.pathname;
-const isHome =
-  pathname === homePath ||
-  pathname === homePath.replace(/\/$/, '') ||
-  pathname.endsWith('/daily-three/') ||
-  pathname.endsWith('/daily-three');
-const isSubpage =
-  pathname.includes('/archive') ||
-  pathname.includes('/about') ||
-  pathname.includes('/digest') ||
-  pathname.includes('/privacy') ||
-  pathname.includes('/disclaimer');
+const isHome = pathname === homePath || pathname === homePath.replace(/\/$/, '');
+const isSubpage = !isHome;
+const canonical = Astro.url.href;
+const hreflangPath = path.replace(/^\//, '');
+const hrefJa = new URL(getRelativeLocaleUrl('ja', hreflangPath), Astro.site ?? Astro.url).href;
+const hrefEn = new URL(getRelativeLocaleUrl('en', hreflangPath), Astro.site ?? Astro.url).href;
 ---
 
 <!doctype html>
-<html lang="ja">
+<html lang={locale}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description} />
+    <meta name="description" content={desc} />
     <link rel="icon" type="image/svg+xml" href={sitePath('favicon.svg')} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="ja" href={hrefJa} />
+    <link rel="alternate" hreflang="en" href={hrefEn} />
+    <link rel="alternate" hreflang="x-default" href={hrefEn} />
     <title>{title}</title>
   </head>
-  <body>
+  <body data-locale={locale}>
     <header class="site-header">
       <a href={homePath} style="text-decoration: none; color: inherit">
         <div class="brand">Daily Three</div>
         <div class="tagline">Auto &amp; Product Design</div>
       </a>
-      <nav class="site-nav" aria-label="メイン">
-        <a href={homePath} aria-current={isSubpage ? undefined : 'page'}>Home</a>
-        <a href={archivePath} aria-current={pathname.includes('/archive') ? 'page' : undefined}>Archive</a>
-        <a href={aboutPath} aria-current={pathname.includes('/about') ? 'page' : undefined}>About</a>
+      <nav class="site-nav" aria-label={t(locale, 'navAria')}>
+        <a href={homePath} aria-current={isSubpage ? undefined : 'page'}>{t(locale, 'navHome')}</a>
+        <a href={archivePath} aria-current={pathname.includes('/archive') ? 'page' : undefined}
+          >{t(locale, 'navArchive')}</a
+        >
+        <a href={aboutPath} aria-current={pathname.includes('/about') ? 'page' : undefined}
+          >{t(locale, 'navAbout')}</a
+        >
+        <LanguageSwitcher locale={locale} path={hreflangPath} alternateLocales={alternateLocales} />
       </nav>
     </header>
     <main>
       <slot />
     </main>
     <footer class="site-footer">
-      <p>Daily Three — personal curation for industrial &amp; product design</p>
-      <nav class="site-footer-nav" aria-label="法務・ポリシー・支援">
-        <a href={privacyPath}>プライバシーポリシー</a>
+      <p>{t(locale, 'footerTagline')}</p>
+      <nav class="site-footer-nav" aria-label={t(locale, 'footerNavAria')}>
+        <a href={privacyPath}>{t(locale, 'privacy')}</a>
         <span aria-hidden="true"> · </span>
-        <a href={disclaimerPath}>免責事項</a>
+        <a href={disclaimerPath}>{t(locale, 'disclaimer')}</a>
         <span class="site-footer-support">
           <span aria-hidden="true"> · </span>
-          <SupportLink />
+          <SupportLink>{t(locale, 'supportLink')}</SupportLink>
         </span>
       </nav>
     </footer>

@@ -1,0 +1,22 @@
+---
+import Digest from '../../../views/Digest.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const digests = await getCollection('digest');
+  return digests
+    .filter((e) => e.id.startsWith('ja/'))
+    .map((e) => ({
+      params: { slug: e.id.replace(/^ja\//, '') },
+      props: { entry: e },
+    }));
+}
+
+interface Props {
+  entry: Awaited<ReturnType<typeof getCollection<'digest'>>>[number];
+}
+
+const { entry } = Astro.props;
+---
+
+<Digest entry={entry} />
