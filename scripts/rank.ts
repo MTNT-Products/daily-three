@@ -1,6 +1,7 @@
 import type { DigestArticle, RawArticle, ScoredArticle, SourcesFile } from './types.js';
 import { getLlmConfig, type LlmConfig } from './llm-config.js';
 import { loadFeedbackWeightsMerged } from './feedback-supabase.js';
+import { formatRecentForLlm, type RecentStory } from './recent-digests.js';
 
 const CURATION_SYSTEM = `You curate "Daily Three: Auto & Product Design" for an industrial product designer.
 Pick exactly 3 articles. Prioritize: new model debuts, concept cars, CMF. Penalize: racing, celebrity.
@@ -19,7 +20,8 @@ Output JSON only:
     }
   ]
 }
-Exactly 3 picks. Flexible car vs product ratio by quality.`;
+Exactly 3 picks. Flexible car vs product ratio by quality.
+If the user message lists recently covered stories, do not pick the same news event again (including follow-ups or another outlet on the same product launch).`;
 
 export function ruleScore(articles: RawArticle[], config: SourcesFile, sourceWeights: Record<string, number>): ScoredArticle[] {
   const text = (a: RawArticle) => `${a.title} ${a.summary}`.toLowerCase();
@@ -134,15 +136,21 @@ function parseLlmJson(raw: string, top: ScoredArticle[]): BilingualDigest {
   return mapBilingualPicks(top, parsed);
 }
 
-async function pickWithAnthropic(top: ScoredArticle[], config: LlmConfig): Promise<BilingualDigest> {
+async function pickWithAnthropic(
+  top: ScoredArticle[],
+  config: LlmConfig,
+  recent: RecentStory[],
+): Promise<BilingualDigest> {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey: config.anthropicApiKey });
+  const userContent =
+    JSON.stringify(buildPayload(top)) + formatRecentForLlm(recent);
   const res = await client.messages.create({
     model: config.anthropicModel,
     max_tokens: 2048,
     temperature: 0.4,
     system: CURATION_SYSTEM + '\nRespond with JSON only, no markdown fences.',
-    messages: [{ role: 'user', content: JSON.stringify(buildPayload(top)) }],
+    messages: [{ role: 'user', content: userContent }],
   });
   const block = res.content.find((b) => b.type === 'text');
   const raw = block?.type === 'text' ? block.text : '';
@@ -154,6 +162,7 @@ async function pickWithAnthropic(top: ScoredArticle[], config: LlmConfig): Promi
 export async function pickTop3Bilingual(
   candidates: ScoredArticle[],
   config: LlmConfig = getLlmConfig(),
+  recent: RecentStory[] = [],
 ): Promise<BilingualDigest> {
   const top = candidates.slice(0, 20);
   if (top.length === 0) {
@@ -162,7 +171,7 @@ export async function pickTop3Bilingual(
       en: { lead: 'No candidates today.', articles: [] },
     };
   }
-  return pickWithAnthropic(top, config);
+  return pickWithAnthropic(top, config, recent);
 }
 
 /** @deprecated Use pickTop3Bilingual */

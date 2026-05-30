@@ -36,7 +36,7 @@ PUBLIC_BMC_URL=https://buymeacoffee.com/yourname
 | 場所 | 内容 |
 |------|------|
 | 全ページフッター | 「サイト運営を支援する」（`PUBLIC_BMC_URL` 未設定時は非表示） |
-| [About ページ](../src/pages/about.astro) | 任意支援・使途・非強制の説明 |
+| [About ページ](../src/views/About.astro) | 運営の説明・Buy Me a Coffee へのリンク |
 | [プライバシーポリシー](../src/pages/privacy.astro) | 外部決済ページへの遷移 |
 
 ## 4. 確認

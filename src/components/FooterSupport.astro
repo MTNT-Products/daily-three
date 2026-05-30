@@ -1,0 +1,28 @@
+---
+import { getSupportUrl } from '../lib/support';
+import { t, type Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const supportUrl = getSupportUrl();
+---
+
+{
+  supportUrl && (
+    <div class="site-footer-support-block">
+      <p class="site-footer-support-lead">{t(locale, 'supportFooterLead')}</p>
+      <a
+        class="btn-support-pill"
+        href={supportUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span class="btn-support-pill-icon" aria-hidden="true">☕</span>
+        {t(locale, 'supportFooterButton')}
+      </a>
+    </div>
+  )
+}

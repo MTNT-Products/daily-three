@@ -69,10 +69,6 @@ export async function enrichArticleMedia(article: DigestArticle): Promise<Digest
   const media = await fetchArticleMedia(article.url, article.sourceId, hero);
 
   let images = media.images;
-  if (hero) {
-    const heroNorm = normalizeImageUrl(hero, article.sourceId);
-    images = [heroNorm, ...images.filter((u) => u !== heroNorm)];
-  }
   if (images.length === 0 && hero) images = [normalizeImageUrl(hero, article.sourceId)];
 
   return {

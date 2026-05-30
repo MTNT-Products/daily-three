@@ -1,4 +1,6 @@
 ---
+import { t, type Locale } from '../i18n/ui';
+
 interface ArticleVideo {
   provider: 'youtube' | 'vimeo' | 'html5';
   embedUrl: string;
@@ -9,9 +11,12 @@ interface Props {
   video?: ArticleVideo;
   sourceId?: string;
   priority?: boolean;
+  locale?: Locale;
 }
 
+const locale = (Astro.props.locale ?? Astro.currentLocale ?? 'ja') as Locale;
 const { images, video, priority = false } = Astro.props;
+const videoLabel = t(locale, 'articleVideoLabel');
 const slides = [...images];
 const slideCount = slides.length + (video ? 1 : 0);
 const hasCarousel = slideCount > 1;
@@ -42,13 +47,24 @@ const uid = `media-${Math.random().toString(36).slice(2, 9)}`;
           data-slide-index={slides.length}
           hidden={slides.length > 0 ? true : undefined}
         >
-          <iframe
-            src={video.embedUrl}
-            title="動画"
-            loading="lazy"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-          />
+          {
+            video.provider === 'html5' ? (
+              <video class="article-native-video" controls playsinline preload="metadata">
+                <source src={video.embedUrl} type="video/mp4" />
+                <a href={video.embedUrl} target="_blank" rel="noopener noreferrer">
+                  {videoLabel}
+                </a>
+              </video>
+            ) : (
+              <iframe
+                src={video.embedUrl}
+                title={videoLabel}
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              />
+            )
+          }
         </figure>
       ) : null
     }

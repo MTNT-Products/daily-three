@@ -4,7 +4,7 @@
 
 > **作業ベース**: `C:\Users\rhcpg\src\daily-three` — 詳細は [WORKSPACE.md](WORKSPACE.md)
 
-- **UI**: 案C（シネマ16:9・画像大・ライトテーマ）
+- **UI**: 案C（画像全幅・元の縦横比・ライトテーマ。動画 embed のみ 16:9）
 - **公開**: 静的サイト（Astro）
 - **自動化**: GitHub Actions（平日 JST 8:00 頃）
 

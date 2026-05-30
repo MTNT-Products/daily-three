@@ -1,8 +1,11 @@
 import * as cheerio from 'cheerio';
-import { normalizeImageUrl, scoreImageUrl } from './image-url.js';
+import { isSquareCroppedImageUrl, normalizeImageUrl, scoreImageUrl } from './image-url.js';
 import {
+  expandDezeenCandidates,
+  expandDesignboomCandidates,
   fetchDesignboomCandidates,
   fetchDezeenRssCandidates,
+  findDezeenFeedItemChunk,
   pickLargestReachableUrl,
 } from './resolve-hero-image.js';
 
@@ -20,6 +23,10 @@ const BROWSER_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 const MAX_GALLERY = 6;
+
+function isRasterImageUrl(url: string): boolean {
+  return /\.(?:jpe?g|png|webp|avif|gif)(?:\?|$)/i.test(url);
+}
 
 export async function fetchArticleMedia(
   pageUrl: string,
@@ -58,7 +65,29 @@ function filterDesignboomArticle(pageUrl: string, urls: string[]): string[] {
 }
 
 function isThumbnailUrl(url: string): boolean {
-  return /-\d{2,4}x\d{2,4}(?=\.[a-z]+$)/i.test(url) || /_sq-\d|411x411|150x150|300x300/i.test(url);
+  return (
+    isSquareCroppedImageUrl(url) ||
+    /-\d{2,4}x\d{2,4}(?=\.[a-z]+$)/i.test(url) ||
+    /_sq-\d|411x411|150x150|300x300/i.test(url)
+  );
+}
+
+function imageUrlVariants(raw: string, sourceId?: string): string[] {
+  const trimmed = raw.trim();
+  const out = new Set<string>([trimmed, normalizeImageUrl(trimmed, sourceId)]);
+  if (trimmed.includes('static.dezeen.com')) {
+    for (const u of expandDezeenCandidates(trimmed)) {
+      out.add(u);
+      out.add(normalizeImageUrl(u, sourceId));
+    }
+  }
+  if (trimmed.includes('designboom.com')) {
+    for (const u of expandDesignboomCandidates(trimmed)) {
+      out.add(u);
+      out.add(normalizeImageUrl(u, sourceId));
+    }
+  }
+  return [...out];
 }
 
 function baseImageKey(url: string): string {
@@ -66,6 +95,7 @@ function baseImageKey(url: string): string {
   return file
     .replace(/-\d+x\d+(?=\.[a-z]+$)/i, '')
     .replace(/-scaled(?=\.[a-z]+$)/i, '')
+    .replace(/(designboom-\d{3,4})-[a-z0-9]{6,}(?=\.[a-z]+$)/i, '$1')
     .replace(/\.[a-z]+$/i, '')
     .toLowerCase();
 }
@@ -78,30 +108,44 @@ async function buildGalleryImages(
   const groups = new Map<string, string[]>();
 
   for (const raw of candidates) {
-    if (!raw?.trim() || isThumbnailUrl(raw) || /twitterimages/i.test(raw)) continue;
-    const url = normalizeImageUrl(raw.trim(), sourceId);
-    const key = baseImageKey(url);
-    if (!groups.has(key)) groups.set(key, []);
-    const list = groups.get(key)!;
-    if (!list.includes(url)) list.push(url);
+    if (!raw?.trim() || !isRasterImageUrl(raw) || /twitterimages/i.test(raw)) continue;
+    for (const variant of imageUrlVariants(raw, sourceId)) {
+      if (isThumbnailUrl(variant)) continue;
+      const url = normalizeImageUrl(variant, sourceId);
+      const key = baseImageKey(url);
+      if (!groups.has(key)) groups.set(key, []);
+      const list = groups.get(key)!;
+      if (!list.includes(url)) list.push(url);
+      for (const expanded of expandDezeenCandidates(url)) {
+        if (isThumbnailUrl(expanded)) continue;
+        const norm = normalizeImageUrl(expanded, sourceId);
+        if (!list.includes(norm)) list.push(norm);
+      }
+    }
   }
 
   const resolved: { url: string; score: number }[] = [];
   const heroKey = heroSeed ? baseImageKey(normalizeImageUrl(heroSeed, sourceId)) : '';
 
   for (const [key, variants] of groups) {
-    const best = (await pickLargestReachableUrl(variants)) ?? variants[0];
+    const best = await pickLargestReachableUrl(variants);
     if (!best) continue;
     resolved.push({ url: best, score: scoreImageUrl(best) + (key === heroKey ? 10_000_000 : 0) });
   }
 
   resolved.sort((a, b) => b.score - a.score);
-  const urls = resolved.map((r) => r.url);
+  let urls = resolved.map((r) => r.url);
+  const nonSquare = urls.filter((u) => !isSquareCroppedImageUrl(u));
+  if (nonSquare.length > 0) urls = nonSquare;
 
   if (heroSeed) {
-    const heroNorm = normalizeImageUrl(heroSeed, sourceId);
-    const rest = urls.filter((u) => u !== heroNorm);
-    return [heroNorm, ...rest].slice(0, MAX_GALLERY);
+    const heroVariants = imageUrlVariants(heroSeed, sourceId).map((u) => normalizeImageUrl(u, sourceId));
+    const heroBest = await pickLargestReachableUrl(heroVariants);
+    if (heroBest) {
+      const heroKey = baseImageKey(heroBest);
+      const rest = urls.filter((u) => baseImageKey(u) !== heroKey);
+      return [heroBest, ...rest].slice(0, MAX_GALLERY);
+    }
   }
 
   return urls.slice(0, MAX_GALLERY);
@@ -143,12 +187,8 @@ async function fetchDezeenRssVideo(pageUrl: string): Promise<ArticleVideo | unde
     });
     if (!res.ok) return undefined;
     const text = await res.text();
-    const anchor = text.indexOf(pageUrl);
-    if (anchor < 0) return undefined;
-    const itemStart = text.lastIndexOf('<item>', anchor);
-    const itemEnd = text.indexOf('</item>', anchor);
-    if (itemStart < 0 || itemEnd < 0) return undefined;
-    const chunk = text.slice(itemStart, itemEnd);
+    const chunk = findDezeenFeedItemChunk(text, pageUrl);
+    if (!chunk) return undefined;
 
     const yt = chunk.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/);
     if (yt) return { provider: 'youtube', embedUrl: `https://www.youtube.com/embed/${yt[1]}` };
@@ -168,26 +208,58 @@ function absUrl(raw: string, base: string): string {
   return url;
 }
 
+const HTML5_VIDEO_RE = /\.(mp4|webm|ogg)(\?|#|$)/i;
+
 function parseVideo($: cheerio.CheerioAPI, pageUrl: string): ArticleVideo | undefined {
   const ogVideo =
     $('meta[property="og:video:url"]').attr('content') ||
     $('meta[property="og:video"]').attr('content') ||
     $('meta[name="twitter:player"]').attr('content');
   if (ogVideo) {
-    const v = parseEmbedUrl(ogVideo, pageUrl);
+    const v = parseMediaUrl(ogVideo, pageUrl);
     if (v) return v;
   }
 
   const iframeSrc = $('iframe[src*="youtube"], iframe[src*="vimeo"]').first().attr('src');
   if (iframeSrc) {
-    const v = parseEmbedUrl(iframeSrc, pageUrl);
+    const v = parseMediaUrl(iframeSrc, pageUrl);
     if (v) return v;
+  }
+
+  return parseHtml5VideoFromDom($, pageUrl);
+}
+
+function parseHtml5VideoFromDom($: cheerio.CheerioAPI, pageUrl: string): ArticleVideo | undefined {
+  const candidates: string[] = [];
+
+  $('video[src]').each((_, el) => {
+    const src = $(el).attr('src');
+    if (src && !src.startsWith('data:')) candidates.push(absUrl(src, pageUrl));
+  });
+
+  $('video source').each((_, el) => {
+    const src = $(el).attr('src') || $(el).attr('data-src');
+    const type = ($(el).attr('type') ?? '').toLowerCase();
+    if (!src || src.startsWith('data:')) return;
+    if (type && !type.startsWith('video/')) return;
+    candidates.push(absUrl(src, pageUrl));
+  });
+
+  $('article a[href], .article a[href], main a[href]').each((_, el) => {
+    const href = $(el).attr('href');
+    if (href && HTML5_VIDEO_RE.test(href)) candidates.push(absUrl(href, pageUrl));
+  });
+
+  for (const raw of candidates) {
+    const v = parseMediaUrl(raw, pageUrl);
+    if (v?.provider === 'html5') return v;
   }
 
   return undefined;
 }
 
-function parseEmbedUrl(raw: string, base: string): ArticleVideo | undefined {
+/** Resolve YouTube/Vimeo embed or direct MP4/WebM file URL. */
+export function parseMediaUrl(raw: string, base: string): ArticleVideo | undefined {
   try {
     const url = new URL(raw, base).href;
     const yt = url.match(/(?:youtube\.com\/embed\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
@@ -197,6 +269,9 @@ function parseEmbedUrl(raw: string, base: string): ArticleVideo | undefined {
     const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
     if (vimeo) {
       return { provider: 'vimeo', embedUrl: `https://player.vimeo.com/video/${vimeo[1]}` };
+    }
+    if (HTML5_VIDEO_RE.test(url)) {
+      return { provider: 'html5', embedUrl: url };
     }
   } catch {
     return undefined;

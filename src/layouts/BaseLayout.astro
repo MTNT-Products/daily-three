@@ -2,7 +2,7 @@
 import '../styles/global.css';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { localePath, sitePath } from '../lib/site-url';
-import SupportLink from '../components/SupportLink.astro';
+import FooterSupport from '../components/FooterSupport.astro';
 import LanguageSwitcher from '../components/LanguageSwitcher.astro';
 import { t, type Locale } from '../i18n/ui';
 
@@ -46,34 +46,35 @@ const hrefEn = new URL(getRelativeLocaleUrl('en', hreflangPath), Astro.site ?? A
   </head>
   <body data-locale={locale}>
     <header class="site-header">
-      <a href={homePath} style="text-decoration: none; color: inherit">
-        <div class="brand">Daily Three</div>
-        <div class="tagline">Auto &amp; Product Design</div>
-      </a>
-      <nav class="site-nav" aria-label={t(locale, 'navAria')}>
-        <a href={homePath} aria-current={isSubpage ? undefined : 'page'}>{t(locale, 'navHome')}</a>
-        <a href={archivePath} aria-current={pathname.includes('/archive') ? 'page' : undefined}
-          >{t(locale, 'navArchive')}</a
-        >
-        <a href={aboutPath} aria-current={pathname.includes('/about') ? 'page' : undefined}
-          >{t(locale, 'navAbout')}</a
-        >
-        <LanguageSwitcher locale={locale} path={hreflangPath} alternateLocales={alternateLocales} />
-      </nav>
+      <div class="site-header-inner">
+        <div class="site-header-lang">
+          <LanguageSwitcher locale={locale} path={hreflangPath} alternateLocales={alternateLocales} />
+        </div>
+        <a href={homePath} class="site-header-brand">
+          <div class="brand">Daily Three</div>
+          <div class="tagline">Auto &amp; Product Design</div>
+        </a>
+        <nav class="site-nav" aria-label={t(locale, 'navAria')}>
+          <a href={homePath} aria-current={isSubpage ? undefined : 'page'}>{t(locale, 'navHome')}</a>
+          <a href={archivePath} aria-current={pathname.includes('/archive') ? 'page' : undefined}
+            >{t(locale, 'navArchive')}</a
+          >
+          <a href={aboutPath} aria-current={pathname.includes('/about') ? 'page' : undefined}
+            >{t(locale, 'navAbout')}</a
+          >
+        </nav>
+      </div>
     </header>
     <main>
       <slot />
     </main>
     <footer class="site-footer">
       <p>{t(locale, 'footerTagline')}</p>
+      <FooterSupport locale={locale} />
       <nav class="site-footer-nav" aria-label={t(locale, 'footerNavAria')}>
         <a href={privacyPath}>{t(locale, 'privacy')}</a>
         <span aria-hidden="true"> · </span>
         <a href={disclaimerPath}>{t(locale, 'disclaimer')}</a>
-        <span class="site-footer-support">
-          <span aria-hidden="true"> · </span>
-          <SupportLink>{t(locale, 'supportLink')}</SupportLink>
-        </span>
       </nav>
     </footer>
   </body>

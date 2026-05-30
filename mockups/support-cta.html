@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daily Three — サイト支援 CTA 比較</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg-page: #f0f0ee;
+      --bg: #fafaf8;
+      --surface: #ffffff;
+      --text: #1a1a18;
+      --muted: #5c5c58;
+      --border: #e2e2de;
+      --accent: #c45c26;
+      --accent-hover: #a84d1f;
+      --max: 720px;
+      --panel-width: 340px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--bg-page);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--text);
+      color: #f5f5f3;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid #333;
+    }
+
+    .toolbar h1 {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .toolbar p {
+      font-size: 0.8rem;
+      opacity: 0.88;
+      margin-top: 0.35rem;
+      max-width: 52rem;
+    }
+
+    .compare-strip {
+      display: flex;
+      gap: 1rem;
+      padding: 1.25rem;
+      overflow-x: auto;
+      align-items: flex-start;
+      scroll-snap-type: x mandatory;
+    }
+
+    .panel-wrap {
+      flex: 0 0 var(--panel-width);
+      scroll-snap-align: start;
+    }
+
+    .panel-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .panel-label strong {
+      display: block;
+      font-size: 0.85rem;
+      letter-spacing: 0;
+      text-transform: none;
+      color: var(--text);
+      margin-top: 0.15rem;
+    }
+
+    .phone {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      max-width: var(--panel-width);
+    }
+
+    .phone-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 1rem 0;
+      font-size: 0.85rem;
+    }
+
+    /* —— 共通: 簡易ページ骨格 —— */
+    .site-header {
+      text-align: center;
+      padding: 1.75rem 0 1rem;
+    }
+
+    .brand {
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .tagline {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+
+    .site-nav {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 0.75rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .fake-main {
+      padding: 0.5rem 0 1rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.5rem;
+    }
+
+    .fake-article {
+      height: 4.5rem;
+      background: linear-gradient(180deg, var(--border) 0%, transparent 100%);
+      margin-bottom: 0.75rem;
+      border-radius: 2px;
+    }
+
+    /* —— 現状フッター —— */
+    .site-footer {
+      text-align: center;
+      padding: 1.25rem 0 1.5rem;
+      font-size: 0.68rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      margin-top: 0.5rem;
+    }
+
+    .site-footer-nav {
+      margin-top: 0.6rem;
+    }
+
+    .site-footer-nav a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .site-footer-nav a:hover {
+      color: var(--accent);
+    }
+
+    /* —— 案 A: フッター内フル幅ボタン —— */
+    .cta-a-wrap {
+      margin-top: 0.85rem;
+      padding: 0 0.25rem;
+    }
+
+    .btn-support-a {
+      display: block;
+      width: 100%;
+      padding: 0.7rem 1rem;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-support-a:hover {
+      background: var(--accent-hover);
+    }
+
+    .site-footer-nav--below-btn {
+      margin-top: 0.75rem;
+      font-size: 0.65rem;
+    }
+
+    /* —— 案 B: 支援バナー —— */
+    .support-banner-b {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      text-align: left;
+    }
+
+    .support-banner-b p {
+      font-size: 0.75rem;
+      color: var(--text);
+      margin-bottom: 0.55rem;
+      line-height: 1.45;
+    }
+
+    .btn-support-b {
+      display: inline-block;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: transparent;
+      border: 1.5px solid var(--accent);
+      border-radius: 4px;
+      text-decoration: none;
+    }
+
+    .btn-support-b:hover {
+      background: rgba(196, 92, 38, 0.08);
+    }
+
+    /* —— 案 C: ピル型 CTA —— */
+    .cta-c-wrap {
+      margin-top: 0.75rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .btn-support-c {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border-radius: 999px;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(196, 92, 38, 0.35);
+    }
+
+    .btn-support-c:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-support-c .icon {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    /* —— 案 D: 記事下カード —— */
+    .support-card-d {
+      margin: 1rem 0 0.5rem;
+      padding: 1rem 1.1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .support-card-d h3 {
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      color: var(--text);
+    }
+
+    .support-card-d p {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 0.65rem;
+      line-height: 1.5;
+    }
+
+    .btn-support-d {
+      display: inline-block;
+      padding: 0.55rem 1.15rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border-radius: 6px;
+      text-decoration: none;
+    }
+
+    .btn-support-d:hover {
+      background: var(--accent-hover);
+    }
+
+    .site-footer--compact {
+      padding-top: 0.85rem;
+      font-size: 0.65rem;
+    }
+
+    .lang-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      justify-content: center;
+      font-size: 0.65rem;
+    }
+
+    .lang-tabs button {
+      font-family: inherit;
+      font-size: 0.65rem;
+      padding: 0.2rem 0.5rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 3px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    .lang-tabs button.is-on {
+      background: var(--text);
+      color: #fff;
+      border-color: var(--text);
+    }
+
+    [data-lang='en'] {
+      display: none;
+    }
+
+    .panel-wrap.is-en [data-lang='ja'] {
+      display: none;
+    }
+
+    .panel-wrap.is-en [data-lang='en'] {
+      display: block;
+    }
+
+    .notes {
+      max-width: 48rem;
+      margin: 0 auto 2rem;
+      padding: 0 1.25rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .notes h2 {
+      font-size: 0.9rem;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .notes ul {
+      padding-left: 1.2rem;
+    }
+
+    .notes li {
+      margin-bottom: 0.35rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <h1>Daily Three — サイト支援 CTA 比較</h1>
+    <p>
+      横スクロールで各案を比較してください。ブラウザで
+      <code>mockups/support-cta.html</code>
+      を開くか、ローカルでファイルをダブルクリック。採用案を決めたら次の実装に進みます。
+    </p>
+  </header>
+
+  <div class="compare-strip">
+    <!-- 現状 -->
+    <div class="panel-wrap" data-panel="current">
+      <div class="panel-label">
+        現状
+        <strong>フッターのテキストリンク</strong>
+      </div>
+      <div class="phone">
+        <div class="phone-inner">
+          <header class="site-header">
+            <div class="brand">Daily Three</div>
+            <div class="tagline">Auto &amp; Product Design</div>
+            <nav class="site-nav"><span>Home</span><span>Archive</span><span>About</span></nav>
+          </header>
+          <div class="fake-main">（記事エリア）</div>
+          <div class="fake-article"></div>
+          <div class="fake-article"></div>
+          <footer class="site-footer">
+            <p data-lang="ja">毎日3本、デザインのニュースを。</p>
+            <p data-lang="en">Three design stories, every day.</p>
+            <nav class="site-footer-nav" aria-label="法務">
+              <a href="#">プライバシー</a>
+              <span aria-hidden="true"> · </span>
+              <a href="#">免責</a>
+              <span aria-hidden="true"> · </span>
+              <a href="#">サイト運営を支援する</a>
+            </nav>
+          </footer>
+        </div>
+      </div>
+      <div class="lang-tabs">
+        <button type="button" class="is-on" data-set-lang="ja">JA</button>
+        <button type="button" data-set-lang="en">EN</button>
+      </div>
+    </div>
+
+    <!-- 案 A -->
+    <div class="panel-wrap" data-panel="a">
+      <div class="panel-label">
+        案 A
+        <strong>フッター内フル幅ボタン</strong>
+      </div>
+      <div class="phone">
+        <div class="phone-inner">
+          <header class="site-header">
+            <div class="brand">Daily Three</div>
+            <div class="tagline">Auto &amp; Product Design</div>
+            <nav class="site-nav"><span>Home</span><span>Archive</span><span>About</span></nav>
+          </header>
+          <div class="fake-main">（記事エリア）</div>
+          <div class="fake-article"></div>
+          <footer class="site-footer">
+            <p data-lang="ja">毎日3本、デザインのニュースを。</p>
+            <p data-lang="en">Three design stories, every day.</p>
+            <div class="cta-a-wrap">
+              <a class="btn-support-a" href="#" data-lang="ja">サイト運営を支援する</a>
+              <a class="btn-support-a" href="#" data-lang="en">Support Daily Three</a>
+            </div>
+            <nav class="site-footer-nav site-footer-nav--below-btn">
+              <a href="#" data-lang="ja">プライバシー</a>
+              <span aria-hidden="true"> · </span>
+              <a href="#" data-lang="ja">免責</a>
+              <span data-lang="en" style="display: none">
+                <a href="#">Privacy</a>
+                <span aria-hidden="true"> · </span>
+                <a href="#">Disclaimer</a>
+              </span>
+            </nav>
+          </footer>
+        </div>
+      </div>
+      <div class="lang-tabs">
+        <button type="button" class="is-on" data-set-lang="ja">JA</button>
+        <button type="button" data-set-lang="en">EN</button>
+      </div>
+    </div>
+
+    <!-- 案 B -->
+    <div class="panel-wrap" data-panel="b">
+      <div class="panel-label">
+        案 B
+        <strong>フッター上の細いバナー</strong>
+      </div>
+      <div class="phone">
+        <div class="phone-inner">
+          <header class="site-header">
+            <div class="brand">Daily Three</div>
+            <div class="tagline">Auto &amp; Product Design</div>
+            <nav class="site-nav"><span>Home</span><span>Archive</span><span>About</span></nav>
+          </header>
+          <div class="fake-main">（記事エリア）</div>
+          <div class="fake-article"></div>
+          <footer class="site-footer">
+            <div class="support-banner-b">
+              <p data-lang="ja">個人で運営しています。よければコーヒー一杯分の応援を。</p>
+              <p data-lang="en">A solo project—chip in for a coffee if you enjoy the digest.</p>
+              <a class="btn-support-b" href="#" data-lang="ja">Buy Me a Coffee で支援</a>
+              <a class="btn-support-b" href="#" data-lang="en" style="display: none">Support on Buy Me a Coffee</a>
+            </div>
+            <p data-lang="ja" style="margin-top: 0.75rem">毎日3本、デザインのニュースを。</p>
+            <p data-lang="en">Three design stories, every day.</p>
+            <nav class="site-footer-nav">
+              <a href="#">Privacy / プライバシー</a>
+            </nav>
+          </footer>
+        </div>
+      </div>
+      <div class="lang-tabs">
+        <button type="button" class="is-on" data-set-lang="ja">JA</button>
+        <button type="button" data-set-lang="en">EN</button>
+      </div>
+    </div>
+
+    <!-- 案 C -->
+    <div class="panel-wrap" data-panel="c">
+      <div class="panel-label">
+        案 C
+        <strong>フッター内ピル型（☕）</strong>
+      </div>
+      <div class="phone">
+        <div class="phone-inner">
+          <header class="site-header">
+            <div class="brand">Daily Three</div>
+            <div class="tagline">Auto &amp; Product Design</div>
+            <nav class="site-nav"><span>Home</span><span>Archive</span><span>About</span></nav>
+          </header>
+          <div class="fake-main">（記事エリア）</div>
+          <div class="fake-article"></div>
+          <footer class="site-footer">
+            <p data-lang="ja">毎日3本、デザインのニュースを。</p>
+            <p data-lang="en">Three design stories, every day.</p>
+            <div class="cta-c-wrap">
+              <a class="btn-support-c" href="#" data-lang="ja">
+                <span class="icon" aria-hidden="true">☕</span>
+                支援する
+              </a>
+              <a class="btn-support-c" href="#" data-lang="en" style="display: none">
+                <span class="icon" aria-hidden="true">☕</span>
+                Buy me a coffee
+              </a>
+            </div>
+            <nav class="site-footer-nav" style="margin-top: 0.65rem">
+              <a href="#">プライバシー · 免責</a>
+            </nav>
+          </footer>
+        </div>
+      </div>
+      <div class="lang-tabs">
+        <button type="button" class="is-on" data-set-lang="ja">JA</button>
+        <button type="button" data-set-lang="en">EN</button>
+      </div>
+    </div>
+
+    <!-- 案 D -->
+    <div class="panel-wrap" data-panel="d">
+      <div class="panel-label">
+        案 D
+        <strong>記事下カード + フッターは控えめ</strong>
+      </div>
+      <div class="phone">
+        <div class="phone-inner">
+          <header class="site-header">
+            <div class="brand">Daily Three</div>
+            <div class="tagline">Auto &amp; Product Design</div>
+            <nav class="site-nav"><span>Home</span><span>Archive</span><span>About</span></nav>
+          </header>
+          <div class="fake-main">（記事エリア）</div>
+          <div class="fake-article"></div>
+          <div class="fake-article"></div>
+          <aside class="support-card-d">
+            <h3 data-lang="ja">Daily Three を応援する</h3>
+            <h3 data-lang="en" style="display: none">Enjoying Daily Three?</h3>
+            <p data-lang="ja">digest の継続に使えるとうれしいです（Buy Me a Coffee）。</p>
+            <p data-lang="en" style="display: none">Tips help keep the weekday digest going.</p>
+            <a class="btn-support-d" href="#" data-lang="ja">コーヒーをおごる</a>
+            <a class="btn-support-d" href="#" data-lang="en" style="display: none">Send a tip</a>
+          </aside>
+          <footer class="site-footer site-footer--compact">
+            <nav class="site-footer-nav">
+              <a href="#" data-lang="ja">プライバシー · 免責 · 支援</a>
+              <a href="#" data-lang="en" style="display: none">Privacy · Disclaimer · Support</a>
+            </nav>
+          </footer>
+        </div>
+      </div>
+      <div class="lang-tabs">
+        <button type="button" class="is-on" data-set-lang="ja">JA</button>
+        <button type="button" data-set-lang="en">EN</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="notes">
+    <h2>選び方の目安</h2>
+    <ul>
+      <li><strong>案 A</strong> — 実装が最小。全ページのフッターだけ変える。目立ちやすい。</li>
+      <li><strong>案 B</strong> — 一文で理由を伝えられる。やや情報量多め。</li>
+      <li><strong>案 C</strong> — コンパクトだが色で目立つ。絵文字は好みが分かれる。</li>
+      <li><strong>案 D</strong> — Home / Archive で読了直後に訴求。フッターは二次。About には別途カードを足す想定。</li>
+    </ul>
+    <p style="margin-top: 0.75rem">
+      組み合わせも可（例: 案 A のボタン + 案 D のカード）。番号で返信してください（例:「A」「D + フッターは A」）。
+    </p>
+  </section>
+
+  <script>
+    document.querySelectorAll('.panel-wrap').forEach((panel) => {
+      const tabs = panel.querySelectorAll('.lang-tabs button');
+      tabs.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const lang = btn.dataset.setLang;
+          panel.classList.toggle('is-en', lang === 'en');
+          tabs.forEach((b) => b.classList.toggle('is-on', b === btn));
+        });
+      });
+    });
+  </script>
+</body>
+</html>

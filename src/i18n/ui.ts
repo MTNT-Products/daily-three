@@ -14,6 +14,8 @@ export const ui = {
     privacy: 'プライバシーポリシー',
     disclaimer: '免責事項',
     supportLink: 'サイト運営を支援する',
+    supportFooterLead: '個人で運営しています。よければコーヒー一杯分の応援を。',
+    supportFooterButton: 'Buy Me a Coffee で支援',
     langSwitcherAria: '言語',
     langJa: '日本語',
     langEn: 'English',
@@ -25,6 +27,7 @@ export const ui = {
     archiveTitle: 'Archive',
     aboutTitle: 'About',
     sourceLabel: '出典',
+    articleVideoLabel: '動画',
     feedbackUnavailable:
       'フィードバックを利用できません。.env の PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY を確認し、npm run dev を再起動してください。',
     feedbackCleared: '評価を取り消しました。',
@@ -44,6 +47,8 @@ export const ui = {
     privacy: 'Privacy',
     disclaimer: 'Disclaimer',
     supportLink: 'Support site operations',
+    supportFooterLead: 'A solo project—chip in for a coffee if you enjoy the digest.',
+    supportFooterButton: 'Support on Buy Me a Coffee',
     langSwitcherAria: 'Language',
     langJa: '日本語',
     langEn: 'English',
@@ -55,6 +60,7 @@ export const ui = {
     archiveTitle: 'Archive',
     aboutTitle: 'About',
     sourceLabel: 'Source',
+    articleVideoLabel: 'Video',
     feedbackUnavailable:
       'Feedback is unavailable. Check PUBLIC_SUPABASE_URL / PUBLIC_SUPABASE_ANON_KEY in .env and restart npm run dev.',
     feedbackCleared: 'Your rating was cleared.',

@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
 import { collectArticles, markSeen } from './collect.js';
 import { buildSourceWeights, loadFeedbackWeights, pickTop3Bilingual, ruleScore } from './rank.js';
+import { applyRecentTopicPenalty, loadRecentStories } from './recent-digests.js';
+import { filterDuplicateStories } from './story-dedup.js';
 import { getLlmConfig } from './llm-config.js';
 import { publishDigest } from './publish.js';
 import { enrichImages } from './ogp.js';
@@ -19,9 +21,16 @@ async function main() {
   const raw = await collectArticles(config.sources);
   console.log(`[digest] ${raw.length} new candidates`);
 
-  const scored = ruleScore(raw, config, sourceWeights);
+  const recent = loadRecentStories(7);
+  if (recent.length > 0) {
+    console.log(`[digest] ${recent.length} recent story(ies) for duplicate avoidance`);
+  }
+
+  const penalized = applyRecentTopicPenalty(ruleScore(raw, config, sourceWeights), recent);
+  const scored = filterDuplicateStories(penalized, recent);
+  console.log(`[digest] ${scored.length} candidates after duplicate filter`);
   const llmConfig = getLlmConfig();
-  const { ja, en } = await pickTop3Bilingual(scored, llmConfig);
+  const { ja, en } = await pickTop3Bilingual(scored, llmConfig, recent);
   console.log(`[digest] Picker: anthropic bilingual (model: ${llmConfig.anthropicModel})`);
 
   if (ja.articles.length === 0) {

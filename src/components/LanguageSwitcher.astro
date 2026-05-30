@@ -15,19 +15,22 @@ const currentPath = path.replace(/^\//, '');
 
 <nav class="lang-switcher" aria-label={t(locale, 'langSwitcherAria')}>
   {
-    alternateLocales.map((loc) => {
+    alternateLocales.map((loc, index) => {
       const href = getRelativeLocaleUrl(loc, currentPath);
       const isCurrent = loc === locale;
       return (
-        <a
-          href={href}
-          hreflang={loc}
-          class:list={['lang-switcher-link', { 'is-current': isCurrent }]}
-          aria-current={isCurrent ? 'page' : undefined}
-          data-set-lang={loc}
-        >
-          {loc === 'ja' ? t(locale, 'langJa') : t(locale, 'langEn')}
-        </a>
+        <>
+          {index > 0 && <span class="lang-switcher-sep" aria-hidden="true">/</span>}
+          <a
+            href={href}
+            hreflang={loc}
+            class:list={['lang-switcher-link', { 'is-current': isCurrent }]}
+            aria-current={isCurrent ? 'page' : undefined}
+            data-set-lang={loc}
+          >
+            {loc === 'ja' ? t(locale, 'langJa') : t(locale, 'langEn')}
+          </a>
+        </>
       );
     })
   }

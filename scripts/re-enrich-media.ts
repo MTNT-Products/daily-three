@@ -2,7 +2,7 @@
  * Backfill images[] / video for existing digest markdown files.
  * Usage: npm run media:re-enrich
  */
-import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse, stringify } from 'yaml';
 import { enrichArticleMedia } from './ogp.js';
@@ -27,14 +27,23 @@ function writeDigestFile(path: string, data: DigestFrontmatter, body: string) {
   writeFileSync(path, `---\n${yaml}---\n${body}`, 'utf8');
 }
 
+function listDigestMarkdownFiles(dir: string): string[] {
+  const out: string[] = [];
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) out.push(...listDigestMarkdownFiles(path));
+    else if (name.endsWith('.md')) out.push(path);
+  }
+  return out;
+}
+
 async function main() {
   const dir = join(process.cwd(), 'src', 'content', 'digest');
-  const files = readdirSync(dir).filter((f) => f.endsWith('.md'));
+  const files = listDigestMarkdownFiles(dir);
 
-  for (const file of files) {
-    const path = join(dir, file);
-    const { data, body } = parseDigestFile(path);
-    console.log(`[media] ${file}`);
+  for (const digestPath of files) {
+    const { data, body } = parseDigestFile(digestPath);
+    console.log(`[media] ${digestPath.replace(/.*digest[\\/]/, '')}`);
 
     for (const article of data.articles) {
       const beforeCount = article.images?.length ?? (article.image ? 1 : 0);
@@ -50,7 +59,7 @@ async function main() {
       console.log(`  ${changed ? '↑' : '='} ${article.sourceId}: ${parts.join(', ')}`);
     }
 
-    writeDigestFile(path, data, body);
+    writeDigestFile(digestPath, data, body);
   }
 
   console.log('[media] Done.');

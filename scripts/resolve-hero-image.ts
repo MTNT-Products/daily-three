@@ -1,5 +1,10 @@
 import * as cheerio from 'cheerio';
-import { normalizeImageUrl, pickLargestImageUrl } from './image-url.js';
+import {
+  isSquareCroppedImageUrl,
+  normalizeImageUrl,
+  pickLargestImageUrl,
+  scoreImageUrl,
+} from './image-url.js';
 
 const BROWSER_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -12,10 +17,10 @@ function fetchHeadersFor(url: string): Record<string, string> {
   return headers;
 }
 
-/** Download bytes to pick the largest reachable asset (ground truth vs URL guessing). */
+/** Prefer non-square heroes by URL score, then file size among reachable assets. */
 export async function pickLargestReachableUrl(candidates: string[]): Promise<string | undefined> {
   const unique = [...new Set(candidates.map((u) => u.trim()).filter(Boolean))];
-  let best: { url: string; bytes: number } | undefined;
+  const ranked: { url: string; score: number; bytes: number }[] = [];
 
   for (const url of unique) {
     try {
@@ -25,13 +30,15 @@ export async function pickLargestReachableUrl(candidates: string[]): Promise<str
       });
       if (!res.ok) continue;
       const bytes = (await res.arrayBuffer()).byteLength;
-      if (!best || bytes > best.bytes) best = { url, bytes };
+      ranked.push({ url, score: scoreImageUrl(url), bytes });
     } catch {
       /* try next */
     }
   }
 
-  return best?.url;
+  if (ranked.length === 0) return undefined;
+  ranked.sort((a, b) => (b.score !== a.score ? b.score - a.score : b.bytes - a.bytes));
+  return ranked[0].url;
 }
 
 /** Dezeen serves full-size files under different suffixes than OGP/RSS thumbnails. */
@@ -71,6 +78,45 @@ export function expandDezeenCandidates(url: string): string[] {
   if (/_dezeen_\d+_col_sq-\d+x\d+$/i.test(base)) {
     const stem = base.replace(/_dezeen_\d+_col_sq-\d+x\d+$/i, '');
     out.add(`${dir}${stem}_dezeen_2364_col_hero${ext}`);
+  }
+
+  if (/_square$/i.test(base)) {
+    const stem = base.replace(/_dezeen_\d+_square$/i, '').replace(/_square$/i, '');
+    out.add(`${dir}${stem}_dezeen_2364_col_hero${ext}`);
+    out.add(`${dir}${stem}_dezeen_2364_hero${ext}`);
+    out.add(`${dir}${stem}_dezeen_hero_col${ext}`);
+    for (let n = 0; n <= 3; n++) {
+      out.add(`${dir}${stem}_dezeen_2364_col_${n}${ext}`);
+    }
+  }
+
+  if (/_dezeen_\d+_sq\d*$/i.test(base)) {
+    const stem = base.replace(/_dezeen_\d+_sq\d*$/i, '');
+    out.add(`${dir}${stem}_dezeen_2364_col_hero${ext}`);
+    out.add(`${dir}${stem}_dezeen_2364_hero${ext}`);
+    out.add(`${dir}${stem}_dezeen_2364_col_1${ext}`);
+  }
+
+  return [...out];
+}
+
+/** Lazy-load URLs may include ephemeral hashes; add stable size paths without the hash. */
+export function expandDesignboomCandidates(url: string): string[] {
+  const out = new Set<string>([url]);
+  if (!/designboom\.com/i.test(url)) return [...out];
+
+  const dir = url.slice(0, url.lastIndexOf('/') + 1);
+  const file = url.slice(url.lastIndexOf('/') + 1);
+  const ext = file.match(/\.[a-z]+$/i)?.[0] ?? '.jpg';
+
+  const hashed = file.match(/^(.*designboom-)(\d{3,4})-[a-z0-9]{6,}(\.[a-z]+)$/i);
+  if (hashed) {
+    out.add(`${dir}${hashed[1]}${hashed[2]}${hashed[3]}`);
+  }
+
+  const sized = file.match(/^(.*designboom-)(\d{3,4})(-\d+)?(\.[a-z]+)$/i);
+  if (sized && !hashed) {
+    out.add(`${dir}${sized[1]}${sized[2]}${sized[4]}`);
   }
 
   return [...out];
@@ -177,6 +223,46 @@ function filterByDominantStem(urls: string[], sampleSize = 50): string[] {
   return urls.filter((u) => dezeenFileStem(u) === anchorStem);
 }
 
+/** Match the RSS <item> for this article, not a mention of the same URL inside another item. */
+export function findDezeenFeedItemChunk(feedXml: string, pageUrl: string): string | undefined {
+  const base = pageUrl.replace(/\/$/, '');
+  for (const linkUrl of [base, `${base}/`]) {
+    const anchor = feedXml.indexOf(`<link>${linkUrl}</link>`);
+    if (anchor < 0) continue;
+    const itemStart = feedXml.lastIndexOf('<item>', anchor);
+    const itemEnd = feedXml.indexOf('</item>', anchor);
+    if (itemStart >= 0 && itemEnd > itemStart) {
+      return feedXml.slice(itemStart, itemEnd);
+    }
+  }
+  return undefined;
+}
+
+function extractLinkedDezeenArticles(chunk: string, pageUrl: string): string[] {
+  const self = pageUrl.replace(/\/$/, '');
+  const links = new Set<string>();
+  for (const m of chunk.matchAll(/href="(https:\/\/www\.dezeen\.com\/\d{4}\/\d{2}\/[^"#?]+)"/gi)) {
+    const href = m[1].replace(/\/$/, '');
+    if (href === self) continue;
+    if (/\/tag\/|\/podcasts\/|newsletter|dezeenagenda|dezeen-debate|dezeenweekly/i.test(href)) continue;
+    links.add(href);
+  }
+  return [...links];
+}
+
+function preferNonSquareDezeenImages(urls: string[]): string[] {
+  const wide = urls.filter((u) => !isSquareCroppedImageUrl(u));
+  return wide.length > 0 ? wide : urls;
+}
+
+function pickDezeenImagesFromChunk(chunk: string, pageUrl: string): string[] {
+  const all = collectDezeenUrlsFromChunk(chunk);
+  let picked = all.filter((u) => matchesDezeenArticleSlug(pageUrl, u));
+  if (picked.length < 2) picked = filterByDominantStem(all);
+  if (picked.length < 2) picked = all.slice(0, 80);
+  return preferNonSquareDezeenImages(tightenDezeenGallery(picked));
+}
+
 /** Dezeen article HTML is often 403; RSS content:encoded still lists full-size WordPress assets. */
 export async function fetchDezeenRssCandidates(pageUrl: string): Promise<string[]> {
   try {
@@ -186,22 +272,22 @@ export async function fetchDezeenRssCandidates(pageUrl: string): Promise<string[
     });
     if (!res.ok) return [];
     const text = await res.text();
-    const anchor = text.indexOf(pageUrl);
-    if (anchor < 0) return [];
+    const chunk = findDezeenFeedItemChunk(text, pageUrl);
+    if (!chunk) return [];
 
-    const itemStart = text.lastIndexOf('<item>', anchor);
-    const itemEnd = text.indexOf('</item>', anchor);
-    if (itemStart < 0 || itemEnd < 0) return [];
-    const chunk = text.slice(itemStart, itemEnd);
+    let picked = pickDezeenImagesFromChunk(chunk, pageUrl);
 
-    const all = collectDezeenUrlsFromChunk(chunk);
-    let picked = all.filter((u) => matchesDezeenArticleSlug(pageUrl, u));
-    if (picked.length < 2) {
-      picked = filterByDominantStem(all);
+    if (picked.every((u) => isSquareCroppedImageUrl(u))) {
+      for (const link of extractLinkedDezeenArticles(chunk, pageUrl).slice(0, 3)) {
+        const linkedChunk = findDezeenFeedItemChunk(text, link);
+        if (!linkedChunk) continue;
+        const fromLinked = pickDezeenImagesFromChunk(linkedChunk, link);
+        picked = preferNonSquareDezeenImages([...picked, ...fromLinked]);
+        if (picked.some((u) => !isSquareCroppedImageUrl(u))) break;
+      }
     }
-    if (picked.length < 2) picked = all.slice(0, 80);
 
-    return tightenDezeenGallery(picked);
+    return picked;
   } catch {
     return [];
   }

@@ -1,3 +1,15 @@
+/** Publisher square crops (OGP/RSS) — not the article's natural aspect ratio. */
+export function isSquareCroppedImageUrl(url: string): boolean {
+  const file = (url.split('/').pop() ?? url).toLowerCase();
+  return (
+    /_square/i.test(file) ||
+    /_dezeen_\d+_sq/i.test(file) ||
+    /_dezeen_\d+_col_sq/i.test(file) ||
+    /(?:^|[-_])sq-\d+x\d+/i.test(file) ||
+    /(?:^|[-_])sq\.[a-z]+$/i.test(file)
+  );
+}
+
 /** Prefer higher-resolution image URLs when the publisher uses size suffixes in paths. */
 export function normalizeImageUrl(url: string, sourceId?: string): string {
   let u = url.trim();
@@ -38,9 +50,12 @@ export function scoreImageUrl(url: string): number {
   let score = 0;
   const dim = url.match(/(\d{3,4})x(\d{3,4})/);
   if (dim) score += parseInt(dim[1], 10) * parseInt(dim[2], 10);
-  if (/2364_col_hero|2364_hero|designboom-large/i.test(url)) score += 2_000_000;
+  if (/2364_col_hero|2364_hero|designboom-large|designboom-1800/i.test(url)) score += 2_000_000;
   if (/hero|full|large|original|master/i.test(url)) score += 500_000;
-  if (/thumb|small|sq-\d|500x400|411x411|_sq-|_hero_col\.|designboom-700-/i.test(url)) score -= 200_000;
+  if (isSquareCroppedImageUrl(url)) score -= 3_500_000;
+  if (/designboom-\d{3,4}-[a-z0-9]{6,}/i.test(url)) score -= 2_500_000;
+  if (/thumb|small|sq-\d|500x400|411x411|_sq-|designboom-700-|designboom-500/i.test(url)) score -= 200_000;
+  if (/designboom-600|[-_]600\./i.test(url)) score -= 150_000;
   return score;
 }
 
