@@ -13,7 +13,7 @@ if ($LASTEXITCODE -ne 0) {
   Write-Error @"
 Failed to dispatch workflow. Common fixes:
   1. gh auth refresh -h github.com -s workflow
-  2. Run from: https://github.com/rhcpgtbd0611-moto/daily-three/actions/workflows/daily-digest.yml
+  2. Run from: https://github.com/MTNT-Products/daily-three/actions/workflows/daily-digest.yml
 "@
 }
 

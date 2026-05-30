@@ -1,7 +1,7 @@
 import type { Locale } from '../ui';
 
 const updated = '2026-05-29';
-const contactUrl = 'https://github.com/rhcpgtbd0611-moto/daily-three/issues';
+const contactUrl = 'https://github.com/MTNT-Products/daily-three/issues';
 
 export function privacyMeta(locale: Locale) {
   return locale === 'ja'

@@ -2,15 +2,15 @@
 
 ## GitHub Pages（初回のみ・手動）
 
-1. https://github.com/rhcpgtbd0611-moto/daily-three/settings/pages
+1. https://github.com/MTNT-Products/daily-three/settings/pages
 2. **Build and deployment** → Source: **GitHub Actions**
 3. Settings → Secrets → Actions に登録:
    - `ANTHROPIC_API_KEY`（本番: Claude Haiku 選定・日本語要約）
-   - `SITE_URL` = `https://rhcpgtbd0611-moto.github.io/daily-three`
+   - `SITE_URL` = `https://MTNT-Products.github.io/daily-three`
    - 任意: `ANTHROPIC_MODEL`, `RESEND_API_KEY`, `EMAIL_TO`, `EMAIL_FROM`
 4. Actions → **Daily Digest and Deploy** → **Run workflow** で確認
 
-公開 URL: https://rhcpgtbd0611-moto.github.io/daily-three/
+公開 URL: https://MTNT-Products.github.io/daily-three/
 
 ## CI の動き
 
@@ -57,7 +57,7 @@ gh auth refresh -h github.com -s workflow
 
 1. **`Run digest pipeline`** — `[digest] Picker: anthropic (model: ...)` と出ること
 2. **`Commit digest and seen URLs`** — 新しい `src/content/digest/YYYY-MM-DD.md` が commit されること
-3. 公開 URL — https://rhcpgtbd0611-moto.github.io/daily-three/ で最新ダイジェストが表示されること
+3. 公開 URL — https://MTNT-Products.github.io/daily-three/ で最新ダイジェストが表示されること
 4. ダイジェスト本文 — `lead` と各記事 `summary` が **日本語** であること
 
 ### トラブルシュート

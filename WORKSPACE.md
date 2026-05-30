@@ -13,8 +13,8 @@ C:\Users\rhcpg\src\daily-three
 
 ## リモート
 
-- GitHub: https://github.com/rhcpgtbd0611-moto/daily-three
-- Pages（設定後）: https://rhcpgtbd0611-moto.github.io/daily-three/
+- GitHub: https://github.com/MTNT-Products/daily-three
+- Pages（設定後）: https://MTNT-Products.github.io/daily-three/
 
 ## よく使うコマンド
 
