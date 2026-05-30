@@ -15,6 +15,7 @@
     "digest:dry": "tsx scripts/run-digest.ts --dry-run",
     "images:re-enrich": "tsx scripts/re-enrich-images.ts",
     "media:re-enrich": "tsx scripts/re-enrich-media.ts",
+    "test": "npm run test:image && npm run test:dedup",
     "test:image": "tsx --test scripts/image-url.test.ts",
     "test:dedup": "tsx --test scripts/story-dedup.test.ts",
     "test:media": "tsx --test scripts/scrape-media.test.ts",

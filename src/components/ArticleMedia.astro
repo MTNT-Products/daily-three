@@ -17,13 +17,23 @@ interface Props {
 const locale = (Astro.props.locale ?? Astro.currentLocale ?? 'ja') as Locale;
 const { images, video, priority = false } = Astro.props;
 const videoLabel = t(locale, 'articleVideoLabel');
+const mediaNoImage = t(locale, 'mediaNoImage');
+const mediaPrev = t(locale, 'mediaPrev');
+const mediaNext = t(locale, 'mediaNext');
+const mediaLoadFailed = t(locale, 'mediaLoadFailed');
 const slides = [...images];
 const slideCount = slides.length + (video ? 1 : 0);
 const hasCarousel = slideCount > 1;
 const uid = `media-${Math.random().toString(36).slice(2, 9)}`;
 ---
 
-<div class={`article-media${hasCarousel ? ' has-carousel' : ''}`} data-media-id={uid}>
+<div
+  class={`article-media${hasCarousel ? ' has-carousel' : ''}`}
+  data-media-id={uid}
+  data-locale={locale}
+  data-load-failed={mediaLoadFailed}
+  tabindex={hasCarousel ? 0 : undefined}
+>
   <div class="article-media-viewport">
     {
       slides.map((src, i) => (
@@ -70,17 +80,17 @@ const uid = `media-${Math.random().toString(36).slice(2, 9)}`;
     }
     {
       !slides.length && !video ? (
-        <div class="article-img placeholder">画像なし</div>
+        <div class="article-img placeholder">{mediaNoImage}</div>
       ) : null
     }
   </div>
   {
     hasCarousel ? (
       <>
-        <button type="button" class="article-media-nav prev" aria-label="前の画像" data-dir="-1">
+        <button type="button" class="article-media-nav prev" aria-label={mediaPrev} data-dir="-1">
           <span class="article-media-nav-icon" aria-hidden="true">‹</span>
         </button>
-        <button type="button" class="article-media-nav next" aria-label="次の画像" data-dir="1">
+        <button type="button" class="article-media-nav next" aria-label={mediaNext} data-dir="1">
           <span class="article-media-nav-icon" aria-hidden="true">›</span>
         </button>
         <span class="article-media-counter" aria-live="polite">
@@ -101,6 +111,8 @@ const uid = `media-${Math.random().toString(36).slice(2, 9)}`;
       if (index < 0) index = 0;
 
       const counter = root.querySelector('.article-media-counter');
+      const loadFailed =
+        (root as HTMLElement).dataset.loadFailed ?? 'Could not load image';
 
       const show = (i: number) => {
         index = (i + slides.length) % slides.length;
@@ -117,13 +129,23 @@ const uid = `media-${Math.random().toString(36).slice(2, 9)}`;
           show(index + dir);
         });
       });
+
+      root.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        if (!root.contains(document.activeElement)) return;
+        e.preventDefault();
+        const dir = e.key === 'ArrowLeft' ? -1 : 1;
+        show(index + dir);
+      });
     });
 
     document.querySelectorAll('img[data-fallback]').forEach((img) => {
       img.addEventListener('error', () => {
         const fig = img.closest('.article-media-slide');
+        const root = img.closest('.article-media') as HTMLElement | null;
+        const msg = root?.dataset.loadFailed ?? 'Could not load image';
         if (fig) {
-          fig.innerHTML = '<div class="article-img placeholder">画像を読み込めませんでした</div>';
+          fig.innerHTML = `<div class="article-img placeholder">${msg}</div>`;
         }
       });
     });

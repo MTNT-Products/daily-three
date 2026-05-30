@@ -30,6 +30,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npm test
+
       - name: Run digest pipeline
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -41,9 +43,6 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npm run digest
-
-      - name: Enrich gallery images for all digests
-        run: npm run media:re-enrich
 
       - name: Commit digest and seen URLs
         run: |
@@ -61,6 +60,7 @@ jobs:
         env:
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+          PUBLIC_BMC_URL: ${{ secrets.PUBLIC_BMC_URL }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

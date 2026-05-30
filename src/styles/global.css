@@ -20,6 +20,26 @@
   padding: 0;
 }
 
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.site-nav a:focus-visible,
+.lang-switcher-link:focus-visible,
+.article-media-nav:focus-visible,
+.feedback-btn:focus-visible,
+.btn-support-pill:focus-visible,
+.home-latest:focus-visible,
+.site-footer-nav a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 html {
   font-family: 'DM Sans', system-ui, sans-serif;
   background: var(--bg);
