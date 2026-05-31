@@ -2,7 +2,8 @@ name: Daily Digest and Deploy
 
 on:
   schedule:
-    - cron: '0 23 * * 1-5'
+    # 23:00 JST on weekdays (14:00 UTC; JST has no DST)
+    - cron: '0 14 * * 1-5'
   workflow_dispatch:
 
 permissions:

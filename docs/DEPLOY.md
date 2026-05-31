@@ -18,7 +18,7 @@
 
 | workflow | きっかけ | 内容 |
 |----------|----------|------|
-| **Daily Digest and Deploy** (`daily-digest.yml`) | 平日 schedule / 手動 | digest → commit → build → Pages |
+| **Daily Digest and Deploy** (`daily-digest.yml`) | 平日 23:00 JST（cron `0 14 * * 1-5` UTC）/ 手動 | digest → commit → build → Pages |
 | **Deploy to GitHub Pages** (`pages-deploy.yml`) | `main` への push | build → Pages のみ（約30秒） |
 
 digest 実行時の流れ:
@@ -50,6 +50,8 @@ gh auth refresh -h github.com -s workflow
 - `data/seen-urls.json` はリポジトリで追跡（再掲載防止）
 - 手動で `npm run digest` した場合も commit すると CI と状態が揃います
 - **ローカル digest は開発・検証用**。本番更新は CI（schedule / workflow_dispatch）を正とする
+- **土日は `run-digest` がスキップ**（`Asia/Tokyo`）。手動で出すときは `npm run digest -- --force` または workflow に `--force` を渡す
+- schedule は **JST の平日 23:00**（旧 `0 23 UTC` は土曜朝 JST にずれていた）
 
 ## 動作確認チェックリスト
 

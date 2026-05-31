@@ -23,12 +23,15 @@ const STOPWORDS = new Set([
 
 /** Topic tokens from article URL slug (for cross-outlet duplicate detection). */
 export function topicKeyFromUrl(url: string): string {
+  return topicKeyFromArticle(url);
+}
+
+/** Slug + title tokens (English RSS titles vs Japanese digest titles). */
+export function topicKeyFromArticle(url: string, title = ''): string {
   try {
     const slug = new URL(url).pathname.split('/').filter(Boolean).pop() ?? '';
-    const tokens = slug
-      .toLowerCase()
-      .split(/[^a-z0-9]+/)
-      .filter((t) => t.length > 3 && !STOPWORDS.has(t));
+    const raw = `${slug} ${title}`.toLowerCase().split(/[^a-z0-9]+/);
+    const tokens = raw.filter((t) => t.length > 3 && !STOPWORDS.has(t));
     return [...new Set(tokens)].sort().join('|');
   } catch {
     return '';
@@ -69,7 +72,7 @@ export function loadRecentStories(maxAgeDays = 7): RecentStory[] {
         date: fm.date ?? date,
         title: a.title,
         url: a.url,
-        topicKey: topicKeyFromUrl(a.url),
+        topicKey: topicKeyFromArticle(a.url, a.title),
       });
     }
   }
@@ -87,7 +90,7 @@ export function applyRecentTopicPenalty(
   return articles
     .map((a) => {
       let score = a.score;
-      const key = topicKeyFromUrl(a.url);
+      const key = topicKeyFromArticle(a.url, a.title);
 
       for (const r of recent) {
         if (r.url === a.url) {

@@ -25,6 +25,11 @@ const FERRARI_PODCAST = {
   title: 'Why the new electric Ferrari draws criticism',
 };
 
+const FERRARI_ROUNDUP = {
+  url: 'https://www.dezeen.com/2026/05/30/this-week-ferrari-released-first-electric-car/',
+  title: "Ferrari Unveils First Electric Vehicle 'Luce' Designed by Jony Ive and Marc Newson",
+};
+
 function scored(partial: { url: string; title: string; score?: number }): ScoredArticle {
   return {
     id: partial.url,
@@ -60,6 +65,20 @@ test('repeatsRecentStory: debate repeats launch, podcast does not', () => {
 
   assert.equal(repeatsRecentStory(debate, launch), true);
   assert.equal(repeatsRecentStory(podcast, launch), false);
+});
+
+test('filterDuplicateStories removes Ferrari roundup after podcast (JA title in recent)', () => {
+  const recent: RecentStory[] = [
+    recentFrom(FERRARI_PODCAST.url, 'なぜ新型電動フェラーリは批判を浴びているのか'),
+  ];
+  const pool = [
+    scored({ ...FERRARI_ROUNDUP, score: 30 }),
+    scored({ url: 'https://example.com/other-car-concept/', title: 'Other concept car', score: 20 }),
+  ];
+
+  const out = filterDuplicateStories(pool, recent);
+  assert.equal(out.length, 1);
+  assert.ok(out[0].url.includes('example.com'));
 });
 
 test('filterDuplicateStories removes debate after launch in recent', () => {

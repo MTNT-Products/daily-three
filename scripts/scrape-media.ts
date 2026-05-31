@@ -136,7 +136,28 @@ async function buildGalleryImages(
   resolved.sort((a, b) => b.score - a.score);
   let urls = resolved.map((r) => r.url);
   const nonSquare = urls.filter((u) => !isSquareCroppedImageUrl(u));
-  if (nonSquare.length > 0) urls = nonSquare;
+  if (nonSquare.length > 0) {
+    urls = nonSquare;
+  } else if (urls.length === 0) {
+    // No wide hero found — accept reachable square crops rather than a broken OGP path
+    const squareGroups = new Map<string, string[]>();
+    for (const raw of candidates) {
+      if (!raw?.trim() || !isRasterImageUrl(raw)) continue;
+      for (const variant of imageUrlVariants(raw, sourceId)) {
+        if (!isSquareCroppedImageUrl(variant)) continue;
+        const url = normalizeImageUrl(variant, sourceId);
+        const key = baseImageKey(url);
+        if (!squareGroups.has(key)) squareGroups.set(key, []);
+        const list = squareGroups.get(key)!;
+        if (!list.includes(url)) list.push(url);
+      }
+    }
+    for (const variants of squareGroups.values()) {
+      const best = await pickLargestReachableUrl(variants);
+      if (best) urls.push(best);
+    }
+    urls.sort((a, b) => scoreImageUrl(b) - scoreImageUrl(a));
+  }
 
   if (heroSeed) {
     const heroVariants = imageUrlVariants(heroSeed, sourceId).map((u) => normalizeImageUrl(u, sourceId));

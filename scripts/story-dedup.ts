@@ -1,6 +1,6 @@
 import type { ScoredArticle } from './types.js';
 import type { RecentStory } from './recent-digests.js';
-import { topicKeyFromUrl } from './recent-digests.js';
+import { topicKeyFromArticle } from './recent-digests.js';
 
 /** Tokens that identify format/outlet, not the news subject. */
 const ENTITY_NOISE = new Set([
@@ -45,6 +45,17 @@ function entityOverlap(a: string, b: string): number {
     if (setB.has(t)) n++;
   }
   return n;
+}
+
+/** Same product story across languages (e.g. Ferrari Luce podcast vs roundup). */
+export function hasStrongProductOverlap(a: string, b: string, minShared = 2): boolean {
+  if (!a || !b) return false;
+  const setB = new Set(b.split('|'));
+  let n = 0;
+  for (const t of a.split('|')) {
+    if (t.length >= 4 && setB.has(t)) n++;
+  }
+  return n >= minShared;
 }
 
 export type StoryFingerprint = {
@@ -99,6 +110,22 @@ export function filterDuplicateStories(
       continue;
     }
 
+    const slugEntity = storyEntityKey(article.url, '');
+    const productHit = recent.some((r) => {
+      const recentSlug = storyEntityKey(r.url, '');
+      const recentFull = storyEntityKey(r.url, r.title);
+      if (fp.angle === 'meta') return false;
+      return (
+        hasStrongProductOverlap(fp.entityKey, recentSlug) ||
+        hasStrongProductOverlap(fp.entityKey, recentFull) ||
+        hasStrongProductOverlap(slugEntity, recentSlug)
+      );
+    });
+    if (productHit) {
+      console.log(`[dedup] skip (same product): ${article.title.slice(0, 60)}`);
+      continue;
+    }
+
     const siblingHit = kept.some((k) => repeatsRecentStory(fp, dedupKey(k)));
     if (siblingHit) {
       console.log(`[dedup] skip (duplicate in pool): ${article.title.slice(0, 60)}`);
@@ -106,7 +133,7 @@ export function filterDuplicateStories(
     }
 
     // Legacy slug overlap (catches near-matches entity key misses)
-    const topicKey = topicKeyFromUrl(article.url);
+    const topicKey = topicKeyFromArticle(article.url, article.title);
     const topicHit = recent.some((r) => {
       const overlap = entityOverlap(topicKey, r.topicKey);
       return overlap >= ENTITY_OVERLAP_THRESHOLD && fp.angle !== 'meta';

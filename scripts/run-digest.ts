@@ -5,12 +5,14 @@ import { buildSourceWeights, loadFeedbackWeights, pickTop3Bilingual, ruleScore }
 import { applyRecentTopicPenalty, loadRecentStories } from './recent-digests.js';
 import { filterDuplicateStories } from './story-dedup.js';
 import { getLlmConfig } from './llm-config.js';
+import { digestPublishDate, isDigestWeekday } from './digest-schedule.js';
 import { publishDigest } from './publish.js';
 import { enrichImages } from './ogp.js';
 import { sendDigestEmails } from './email.js';
 import type { SourcesFile } from './types.js';
 
 const dryRun = process.argv.includes('--dry-run');
+const forceRun = process.argv.includes('--force');
 
 async function main() {
   const config = parse(readFileSync('sources.yaml', 'utf-8')) as SourcesFile;
@@ -50,6 +52,12 @@ async function main() {
   }
 
   const now = new Date();
+  if (!dryRun && !forceRun && !isDigestWeekday(now)) {
+    console.log('[digest] Skipping: weekend in Asia/Tokyo (pass --force to override)');
+    return;
+  }
+
+  const publishDate = digestPublishDate(now);
   const siteBase = (process.env.SITE_URL ?? 'https://example.com').replace(/\/$/, '');
   const siteUrlJa = `${siteBase}/ja/`;
   const siteUrlEn = `${siteBase}/en/`;
@@ -59,12 +67,12 @@ async function main() {
     return;
   }
 
-  const pathJa = publishDigest(now, 'ja', ja.lead, ja.articles);
+  const pathJa = publishDigest(publishDate, 'ja', ja.lead, ja.articles);
   console.log('[digest] Wrote', pathJa);
 
   if (en.articles.length === 3 && en.lead?.trim()) {
     try {
-      const pathEn = publishDigest(now, 'en', en.lead, en.articles);
+      const pathEn = publishDigest(publishDate, 'en', en.lead, en.articles);
       console.log('[digest] Wrote', pathEn);
     } catch (e) {
       console.warn('[digest] English publish skipped:', e);
@@ -79,7 +87,7 @@ async function main() {
     en: { articles: en.articles, lead: en.lead ?? '' },
     siteUrlJa,
     siteUrlEn,
-    dateLabel: now.toISOString().slice(0, 10),
+    dateLabel: publishDate.toISOString().slice(0, 10),
   });
 }
 

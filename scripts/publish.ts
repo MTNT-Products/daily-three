@@ -1,5 +1,6 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { digestCalendarDate, DIGEST_TIMEZONE } from './digest-schedule.js';
 import type { DigestArticle } from './types.js';
 
 export type PublishLocale = 'ja' | 'en';
@@ -10,7 +11,7 @@ export function publishDigest(
   lead: string,
   articles: DigestArticle[],
 ) {
-  const slug = date.toISOString().slice(0, 10);
+  const slug = digestCalendarDate(date);
   const dir = join(process.cwd(), 'src', 'content', 'digest', locale);
   mkdirSync(dir, { recursive: true });
 
@@ -62,10 +63,19 @@ function yamlQuote(s: string) {
 
 function formatDisplayDate(d: Date, locale: PublishLocale) {
   if (locale === 'ja') {
-    const days = ['日', '月', '火', '水', '木', '金', '土'];
-    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${days[d.getDay()]}）`;
+    const parts = new Intl.DateTimeFormat('ja-JP', {
+      timeZone: DIGEST_TIMEZONE,
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      weekday: 'short',
+    }).formatToParts(d);
+    const get = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((p) => p.type === type)?.value ?? '';
+    return `${get('year')}年${get('month')}月${get('day')}日（${get('weekday')}）`;
   }
   return d.toLocaleDateString('en-US', {
+    timeZone: DIGEST_TIMEZONE,
     weekday: 'long',
     year: 'numeric',
     month: 'long',

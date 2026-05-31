@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
-import { normalizeImageUrl, pickLargestImageUrl } from './image-url.js';
-import { resolveHeroImage } from './resolve-hero-image.js';
+import { normalizeImageUrl } from './image-url.js';
+import { pickLargestReachableUrl, resolveHeroImage } from './resolve-hero-image.js';
 import { fetchArticleMedia } from './scrape-media.js';
 import type { DigestArticle } from './types.js';
 
@@ -44,7 +44,8 @@ export async function fetchOgpImage(url: string, sourceId?: string): Promise<str
     const html = await res.text();
     const $ = cheerio.load(html);
     const candidates = collectOgpImageCandidates($, url);
-    return pickLargestImageUrl(candidates.map((c) => normalizeImageUrl(c, sourceId)));
+    const normalized = candidates.map((c) => normalizeImageUrl(c, sourceId));
+    return pickLargestReachableUrl([...new Set(normalized)]);
   } catch {
     return undefined;
   }
@@ -60,7 +61,11 @@ export async function enrichHeroImage(article: {
   if (resolved) return resolved;
 
   const ogp = await fetchOgpImage(article.url, article.sourceId);
-  return ogp ?? (article.image ? normalizeImageUrl(article.image, article.sourceId) : undefined);
+  if (ogp) return ogp;
+
+  const seed = article.image ? normalizeImageUrl(article.image, article.sourceId) : undefined;
+  if (!seed) return undefined;
+  return pickLargestReachableUrl([seed]);
 }
 
 /** Hero + gallery images + optional video embed. */
@@ -69,7 +74,18 @@ export async function enrichArticleMedia(article: DigestArticle): Promise<Digest
   const media = await fetchArticleMedia(article.url, article.sourceId, hero);
 
   let images = media.images;
-  if (images.length === 0 && hero) images = [normalizeImageUrl(hero, article.sourceId)];
+  const reachable = await pickLargestReachableUrl(
+    [...new Set([hero, article.image, ...images].filter(Boolean) as string[])].map((u) =>
+      normalizeImageUrl(u, article.sourceId),
+    ),
+  );
+  if (reachable) {
+    const key = reachable.split('/').pop() ?? reachable;
+    const rest = images.filter((u) => (u.split('/').pop() ?? u) !== key);
+    images = [reachable, ...rest];
+  } else {
+    images = [];
+  }
 
   return {
     ...article,
