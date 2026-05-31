@@ -3,6 +3,9 @@ import '../styles/global.css';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { localePath, sitePath } from '../lib/site-url';
 import FooterSupport from '../components/FooterSupport.astro';
+import FooterSubscribe from '../components/FooterSubscribe.astro';
+import { getSupportUrl } from '../lib/support';
+import { isSubscribeFormEnabled } from '../lib/subscribe-enabled';
 import LanguageSwitcher from '../components/LanguageSwitcher.astro';
 import { t, type Locale } from '../i18n/ui';
 
@@ -12,10 +15,23 @@ interface Props {
   /** Path without locale, e.g. `digest/2026-05-27/` */
   path?: string;
   alternateLocales?: Locale[];
+  /** Open Graph image (absolute URL). Digest pages use the lead article image when available. */
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  /** JSON-LD object rendered in a single script tag. */
+  jsonLd?: Record<string, unknown>;
 }
 
 const locale = Astro.currentLocale as Locale;
-const { title, description, path = '', alternateLocales = ['ja', 'en'] } = Astro.props;
+const {
+  title,
+  description,
+  path = '',
+  alternateLocales = ['ja', 'en'],
+  ogImage,
+  ogType = 'website',
+  jsonLd,
+} = Astro.props;
 const desc = description ?? t(locale, 'siteDescription');
 const homePath = localePath(locale);
 const archivePath = localePath(locale, 'archive/');
@@ -29,6 +45,11 @@ const canonical = Astro.url.href;
 const hreflangPath = path.replace(/^\//, '');
 const hrefJa = new URL(getRelativeLocaleUrl('ja', hreflangPath), Astro.site ?? Astro.url).href;
 const hrefEn = new URL(getRelativeLocaleUrl('en', hreflangPath), Astro.site ?? Astro.url).href;
+const showFooterEngagement = Boolean(getSupportUrl() || isSubscribeFormEnabled());
+const feedJa = new URL(sitePath('ja/feed.xml'), Astro.site ?? Astro.url).href;
+const feedEn = new URL(sitePath('en/feed.xml'), Astro.site ?? Astro.url).href;
+const ogLocale = locale === 'ja' ? 'ja_JP' : 'en_US';
+const twitterCard = ogImage ? 'summary_large_image' : 'summary';
 ---
 
 <!doctype html>
@@ -42,6 +63,20 @@ const hrefEn = new URL(getRelativeLocaleUrl('en', hreflangPath), Astro.site ?? A
     <link rel="alternate" hreflang="ja" href={hrefJa} />
     <link rel="alternate" hreflang="en" href={hrefEn} />
     <link rel="alternate" hreflang="x-default" href={hrefEn} />
+    <link rel="alternate" type="application/rss+xml" title="Daily Three (日本語)" href={feedJa} />
+    <link rel="alternate" type="application/rss+xml" title="Daily Three (English)" href={feedEn} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="Daily Three" />
+    <meta property="og:locale" content={ogLocale} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content={twitterCard} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={desc} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
     <title>{title}</title>
   </head>
   <body data-locale={locale}>
@@ -70,7 +105,14 @@ const hrefEn = new URL(getRelativeLocaleUrl('en', hreflangPath), Astro.site ?? A
     </main>
     <footer class="site-footer">
       <p>{t(locale, 'footerTagline')}</p>
-      <FooterSupport locale={locale} />
+      {
+        showFooterEngagement && (
+          <div class="site-footer-engagement">
+            <FooterSupport locale={locale} />
+            <FooterSubscribe locale={locale} />
+          </div>
+        )
+      }
       <nav class="site-footer-nav" aria-label={t(locale, 'footerNavAria')}>
         <a href={privacyPath}>{t(locale, 'privacy')}</a>
         <span aria-hidden="true"> · </span>

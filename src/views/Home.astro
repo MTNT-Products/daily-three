@@ -3,15 +3,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import { localePath } from '../lib/site-url';
 import { digestSlugFromEntryId, getDigestsForLocale } from '../lib/digest';
+import { absoluteSiteUrl, pickDigestOgImage, webSiteJsonLd } from '../lib/seo';
 import { t, type Locale } from '../i18n/ui';
 
 const locale = Astro.currentLocale as Locale;
 const digests = await getDigestsForLocale(locale);
 const latest = digests[0];
 const latestSlug = latest ? digestSlugFromEntryId(latest.id) : '';
+const ogImage = latest ? pickDigestOgImage(latest.data.articles) : undefined;
+const jsonLd = webSiteJsonLd({
+  siteUrl: absoluteSiteUrl(Astro.site, locale),
+  name: 'Daily Three',
+  description: t(locale, 'siteDescription'),
+});
 ---
 
-<BaseLayout title="Daily Three — Auto & Product Design" path="">
+<BaseLayout
+  title="Daily Three — Auto & Product Design"
+  path=""
+  ogImage={ogImage}
+  jsonLd={jsonLd}
+>
   <div class="home-hero">
     <h1>{t(locale, 'homeTitle')}</h1>
     <p>{t(locale, 'homeSubtitle')}</p>

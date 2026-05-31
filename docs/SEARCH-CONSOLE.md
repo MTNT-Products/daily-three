@@ -9,6 +9,7 @@ Daily Three は **Analytics を使わない** ため、検索の様子は主に 
 | サイト（URL プレフィックス） | `https://MTNT-Products.github.io/daily-three/` |
 | サイトマップ | `https://MTNT-Products.github.io/daily-three/sitemap-index.xml` |
 | robots.txt | `https://MTNT-Products.github.io/daily-three/robots.txt` |
+| RSS（ja / en） | `…/ja/feed.xml` · `…/en/feed.xml`（[PROMOTION.md](PROMOTION.md) 参照） |
 
 `astro.config.mjs` の `site` / `base` と一致させています。独自ドメインに変えたら、ここと `public/robots.txt` を同時に更新してください。
 

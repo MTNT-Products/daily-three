@@ -7,6 +7,7 @@
   --muted: #5c5c58;
   --border: #e2e2de;
   --accent: #c45c26;
+  --subscribe: #2a5c4a;
   --good: #2d6a4f;
   --bad: #9b2226;
   --max: 720px;
@@ -34,6 +35,7 @@
 .article-media-nav:focus-visible,
 .feedback-btn:focus-visible,
 .btn-support-pill:focus-visible,
+.btn-subscribe-pill:focus-visible,
 .home-latest:focus-visible,
 .site-footer-nav a:focus-visible {
   outline: 2px solid var(--accent);
@@ -444,9 +446,25 @@ main {
   color: var(--accent);
 }
 
-.site-footer-support-block {
+.site-footer-engagement {
   margin: 1rem auto 0;
   max-width: 22rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.site-footer-support-block,
+.site-footer-subscribe-block {
+  margin: 0;
+  max-width: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .site-footer-support-lead {
@@ -483,6 +501,190 @@ main {
 .btn-support-pill-icon {
   font-size: 1.05rem;
   line-height: 1;
+}
+
+.site-footer-subscribe-lead {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text);
+  margin-bottom: 0.65rem;
+}
+
+.btn-subscribe-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.15rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--subscribe);
+  background: var(--surface);
+  border: 2px solid var(--subscribe);
+  border-radius: 999px;
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.btn-subscribe-pill:hover {
+  background: rgba(42, 92, 74, 0.1);
+  color: var(--subscribe);
+  text-decoration: none;
+}
+
+.btn-subscribe-pill-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.subscribe-form {
+  width: 100%;
+}
+
+.subscribe-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.subscribe-input {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.subscribe-input:focus-visible {
+  outline: 2px solid var(--subscribe);
+  outline-offset: 2px;
+}
+
+.subscribe-form .btn-subscribe-pill {
+  width: 100%;
+}
+
+.subscribe-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--muted);
+  text-align: left;
+}
+
+.subscribe-consent input {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+.subscribe-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.subscribe-success-panel {
+  margin-top: 0.25rem;
+  padding: 0.85rem 1rem;
+  text-align: center;
+  background: #f0faf5;
+  border: 2px solid var(--subscribe);
+  border-radius: 10px;
+  outline: none;
+}
+
+.subscribe-success-panel:focus-visible {
+  outline: 2px solid var(--subscribe);
+  outline-offset: 2px;
+}
+
+.subscribe-success-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--subscribe);
+}
+
+.subscribe-success-email {
+  margin: 0 0 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.subscribe-success-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.subscribe-register-another {
+  margin-top: 0.65rem;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--subscribe);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.subscribe-register-another:hover {
+  color: #1e4538;
+}
+
+.subscribe-form--success .subscribe-form-fields {
+  display: none;
+}
+
+.subscribe-status {
+  margin-top: 0.5rem;
+  min-height: 1.1em;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--subscribe);
+}
+
+.subscribe-status[hidden] {
+  display: none;
+}
+
+.subscribe-status--error {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.subscribe-status--busy {
+  color: var(--muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .lang-switcher {

@@ -28,3 +28,6 @@ terminals/
 
 # one-off investigation scripts (do not commit)
 scripts/probe-*.ts
+
+# Supabase CLI local cache
+supabase/.temp/

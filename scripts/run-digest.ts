@@ -7,7 +7,7 @@ import { filterDuplicateStories } from './story-dedup.js';
 import { getLlmConfig } from './llm-config.js';
 import { publishDigest } from './publish.js';
 import { enrichImages } from './ogp.js';
-import { sendDigestEmail } from './email.js';
+import { sendDigestEmails } from './email.js';
 import type { SourcesFile } from './types.js';
 
 const dryRun = process.argv.includes('--dry-run');
@@ -50,8 +50,9 @@ async function main() {
   }
 
   const now = new Date();
-  const siteBase = process.env.SITE_URL ?? 'https://example.com';
-  const siteUrlJa = `${siteBase.replace(/\/$/, '')}/ja/`;
+  const siteBase = (process.env.SITE_URL ?? 'https://example.com').replace(/\/$/, '');
+  const siteUrlJa = `${siteBase}/ja/`;
+  const siteUrlEn = `${siteBase}/en/`;
 
   if (dryRun) {
     console.log(JSON.stringify({ ja, en }, null, 2));
@@ -73,7 +74,13 @@ async function main() {
   }
 
   markSeen(ja.articles.map((a) => a.url));
-  await sendDigestEmail(ja.articles, ja.lead, siteUrlJa, now.toISOString().slice(0, 10));
+  await sendDigestEmails({
+    ja: { articles: ja.articles, lead: ja.lead },
+    en: { articles: en.articles, lead: en.lead ?? '' },
+    siteUrlJa,
+    siteUrlEn,
+    dateLabel: now.toISOString().slice(0, 10),
+  });
 }
 
 main().catch((e) => {

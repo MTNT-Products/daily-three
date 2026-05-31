@@ -1,0 +1,225 @@
+---
+import { isSubscribeFormEnabled } from '../lib/subscribe-enabled';
+import { t, type Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const enabled = isSubscribeFormEnabled();
+const formId = `subscribe-form-${locale}`;
+---
+
+{
+  enabled && (
+    <div class="site-footer-subscribe-block" id="footer-subscribe">
+      <p class="site-footer-subscribe-lead">{t(locale, 'subscribeFooterLead')}</p>
+      <form
+        class="subscribe-form"
+        id={formId}
+        novalidate
+        data-locale={locale}
+        data-msg-success-title={t(locale, 'subscribeSuccessTitle')}
+        data-msg-success-hint={t(locale, 'subscribeSuccessHint')}
+        data-msg-invalid={t(locale, 'subscribeInvalidEmail')}
+        data-msg-consent={t(locale, 'subscribeConsentRequired')}
+        data-msg-unavailable={t(locale, 'subscribeUnavailable')}
+        data-msg-failed={t(locale, 'subscribeFailed')}
+        data-msg-submitting={t(locale, 'subscribeSubmitting')}
+        data-msg-register-another={t(locale, 'subscribeRegisterAnother')}
+      >
+        <div class="subscribe-form-fields">
+          <div class="subscribe-form-row">
+            <label class="visually-hidden" for={`${formId}-email`}>
+              {t(locale, 'subscribeEmailLabel')}
+            </label>
+            <input
+              type="email"
+              id={`${formId}-email`}
+              name="email"
+              class="subscribe-input"
+              autocomplete="email"
+              placeholder={t(locale, 'subscribeEmailPlaceholder')}
+            />
+            <button type="button" class="btn-subscribe-pill" data-subscribe-submit>
+              <span class="btn-subscribe-pill-icon" aria-hidden="true">✉</span>
+              {t(locale, 'subscribeFooterButton')}
+            </button>
+          </div>
+          <label class="subscribe-consent">
+            <input type="checkbox" name="consent" value="1" />
+            <span>{t(locale, 'subscribeConsent')}</span>
+          </label>
+        </div>
+        <div class="subscribe-success-panel" data-subscribe-success tabindex="-1" hidden>
+          <p class="subscribe-success-title" data-success-title />
+          <p class="subscribe-success-email" data-success-email />
+          <p class="subscribe-success-hint" data-success-hint />
+          <button type="button" class="subscribe-register-another" data-subscribe-reset hidden>
+            {t(locale, 'subscribeRegisterAnother')}
+          </button>
+        </div>
+        <p class="subscribe-status" role="status" aria-live="assertive" hidden />
+        {/* Honeypot outside fields wrapper; uncommon name to avoid autofill */}
+        <input
+          type="text"
+          name="bot_check"
+          class="subscribe-honeypot"
+          tabindex="-1"
+          autocomplete="off"
+          aria-hidden="true"
+        />
+      </form>
+    </div>
+  )
+}
+
+<script>
+  import { subscribeToDigest } from '../lib/subscribe-client';
+
+  function maskEmail(email: string) {
+    const at = email.indexOf('@');
+    if (at < 1) return email;
+    const local = email.slice(0, at);
+    const domain = email.slice(at + 1);
+    const head = local.length <= 2 ? (local[0] ?? '') : local.slice(0, 2);
+    return `${head}***@${domain}`;
+  }
+
+  function readMessages(form: HTMLFormElement) {
+    const d = form.dataset;
+    return {
+      successTitle: d.msgSuccessTitle ?? '',
+      successHint: d.msgSuccessHint ?? '',
+      invalid: d.msgInvalid ?? '',
+      consent: d.msgConsent ?? '',
+      unavailable: d.msgUnavailable ?? '',
+      failed: d.msgFailed ?? '',
+      submitting: d.msgSubmitting ?? '',
+      registerAnother: d.msgRegisterAnother ?? '',
+    };
+  }
+
+  function initSubscribeForm(form: HTMLFormElement) {
+    if (form.dataset.subscribeBound === '1') return;
+    form.dataset.subscribeBound = '1';
+
+    const locale = form.dataset.locale === 'en' ? 'en' : 'ja';
+    const messages = readMessages(form);
+    const fieldsEl = form.querySelector('.subscribe-form-fields');
+    const successPanel = form.querySelector('[data-subscribe-success]');
+    const successTitle = form.querySelector('[data-success-title]');
+    const successEmail = form.querySelector('[data-success-email]');
+    const successHint = form.querySelector('[data-success-hint]');
+    const resetBtn = form.querySelector('[data-subscribe-reset]');
+    const statusEl = form.querySelector('.subscribe-status');
+    const submitBtn = form.querySelector('[data-subscribe-submit]');
+    const honeypot = form.querySelector('input[name="bot_check"]');
+    const defaultBtnHtml = submitBtn?.innerHTML ?? '';
+
+    if (honeypot instanceof HTMLInputElement) honeypot.value = '';
+
+    function setStatus(text: string, isError: boolean) {
+      if (!(statusEl instanceof HTMLElement)) return;
+      statusEl.hidden = !text;
+      statusEl.textContent = text;
+      statusEl.classList.toggle('subscribe-status--error', isError);
+      statusEl.classList.toggle('subscribe-status--busy', !isError && text === messages.submitting);
+    }
+
+    function resetFormUi() {
+      form.classList.remove('subscribe-form--success');
+      if (fieldsEl instanceof HTMLElement) fieldsEl.hidden = false;
+      if (successPanel instanceof HTMLElement) successPanel.hidden = true;
+      if (resetBtn instanceof HTMLElement) resetBtn.hidden = true;
+      setStatus('', false);
+      if (submitBtn instanceof HTMLButtonElement) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = defaultBtnHtml;
+      }
+      if (honeypot instanceof HTMLInputElement) honeypot.value = '';
+    }
+
+    function showSuccess(email: string) {
+      if (fieldsEl instanceof HTMLElement) fieldsEl.hidden = true;
+      if (successPanel instanceof HTMLElement) {
+        successPanel.hidden = false;
+        if (successTitle instanceof HTMLElement) successTitle.textContent = messages.successTitle;
+        if (successEmail instanceof HTMLElement) successEmail.textContent = maskEmail(email);
+        if (successHint instanceof HTMLElement) successHint.textContent = messages.successHint;
+        successPanel.focus({ preventScroll: true });
+      }
+      if (resetBtn instanceof HTMLElement) resetBtn.hidden = false;
+      setStatus('', false);
+      form.classList.add('subscribe-form--success');
+    }
+
+    async function handleSubscribe() {
+      if (honeypot instanceof HTMLInputElement) {
+        honeypot.value = '';
+      }
+
+      const consent = form.querySelector('input[name="consent"]');
+      if (consent instanceof HTMLInputElement && !consent.checked) {
+        setStatus(messages.consent, true);
+        consent.focus({ preventScroll: true });
+        return;
+      }
+
+      const emailInput = form.querySelector('input[name="email"]');
+      if (!(emailInput instanceof HTMLInputElement)) return;
+
+      const email = emailInput.value.trim();
+      if (!email) {
+        setStatus(messages.invalid, true);
+        emailInput.focus({ preventScroll: true });
+        return;
+      }
+
+      if (submitBtn instanceof HTMLButtonElement) submitBtn.disabled = true;
+      setStatus(messages.submitting, false);
+
+      try {
+        const result = await subscribeToDigest(email, locale);
+        if (result.ok) {
+          showSuccess(email);
+          return;
+        }
+        if (result.error === 'invalid_email') setStatus(messages.invalid, true);
+        else if (result.error === 'unavailable') setStatus(messages.unavailable, true);
+        else setStatus(messages.failed, true);
+      } catch {
+        setStatus(messages.failed, true);
+      } finally {
+        if (!form.classList.contains('subscribe-form--success') && submitBtn instanceof HTMLButtonElement) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = defaultBtnHtml;
+        }
+      }
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      void handleSubscribe();
+    });
+
+    submitBtn?.addEventListener('click', (event) => {
+      event.preventDefault();
+      void handleSubscribe();
+    });
+
+    resetBtn?.addEventListener('click', () => {
+      resetFormUi();
+      const emailInput = form.querySelector('input[name="email"]');
+      emailInput instanceof HTMLInputElement && emailInput.focus({ preventScroll: true });
+    });
+  }
+
+  function initAllSubscribeForms() {
+    document.querySelectorAll<HTMLFormElement>('#footer-subscribe form.subscribe-form').forEach(initSubscribeForm);
+  }
+
+  initAllSubscribeForms();
+  document.addEventListener('astro:page-load', initAllSubscribeForms);
+</script>
