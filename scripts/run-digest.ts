@@ -5,7 +5,11 @@ import { buildSourceWeights, loadFeedbackWeights, pickTop3Bilingual, ruleScore }
 import { applyRecentTopicPenalty, loadRecentStories } from './recent-digests.js';
 import { filterDuplicateStories } from './story-dedup.js';
 import { getLlmConfig } from './llm-config.js';
-import { digestPublishDate, isDigestWeekday } from './digest-schedule.js';
+import {
+  digestEditionCalendarDate,
+  digestPublishDate,
+  isDigestWeekday,
+} from './digest-schedule.js';
 import { publishDigest } from './publish.js';
 import { enrichImages } from './ogp.js';
 import { sendDigestEmails } from './email.js';
@@ -57,7 +61,9 @@ async function main() {
     return;
   }
 
+  const edition = digestEditionCalendarDate(now);
   const publishDate = digestPublishDate(now);
+  console.log(`[digest] Edition date (JST): ${edition}`);
   const siteBase = (process.env.SITE_URL ?? 'https://example.com').replace(/\/$/, '');
   const siteUrlJa = `${siteBase}/ja/`;
   const siteUrlEn = `${siteBase}/en/`;
@@ -87,7 +93,7 @@ async function main() {
     en: { articles: en.articles, lead: en.lead ?? '' },
     siteUrlJa,
     siteUrlEn,
-    dateLabel: publishDate.toISOString().slice(0, 10),
+    dateLabel: edition,
   });
 }
 

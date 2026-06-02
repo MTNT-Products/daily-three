@@ -72,7 +72,13 @@ $env:EMAIL_TO = 'you@example.com'
 | `EMAIL_TO` | 運営者控え（任意） |
 | `PUBLIC_SUPABASE_*` / `SUPABASE_*` | 既存と同じ |
 
-`daily-digest` と Pages デプロイの両方で `RESEND_API_KEY` が digest 実行時に使われます。
+`daily-digest` の digest ステップで `RESEND_API_KEY` が必須です（空だと workflow が **Verify email secrets** で失敗）。
+
+`.env` にキーがある場合、リポジトリへ反映:
+
+```powershell
+.\scripts\sync-github-email-secrets.ps1
+```
 
 ### 4. Resend の注意（重要）
 

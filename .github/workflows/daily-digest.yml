@@ -33,6 +33,11 @@ jobs:
 
       - run: npm test
 
+      - name: Verify email secrets
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: node scripts/verify-ci-email.mjs
+
       - name: Run digest pipeline
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -53,7 +58,8 @@ jobs:
           if git diff --staged --quiet; then
             echo "No digest changes to commit"
           else
-            git commit -m "chore(digest): auto-update $(date -u +%Y-%m-%d)"
+            EDITION=$(npx tsx scripts/print-edition-date.ts)
+            git commit -m "chore(digest): auto-update ${EDITION}"
             git push
           fi
 

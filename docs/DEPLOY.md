@@ -51,7 +51,8 @@ gh auth refresh -h github.com -s workflow
 - 手動で `npm run digest` した場合も commit すると CI と状態が揃います
 - **ローカル digest は開発・検証用**。本番更新は CI（schedule / workflow_dispatch）を正とする
 - **土日は `run-digest` がスキップ**（`Asia/Tokyo`）。手動で出すときは `npm run digest -- --force` または workflow に `--force` を渡す
-- schedule は **JST の平日 23:00**（旧 `0 23 UTC` は土曜朝 JST にずれていた）
+- schedule は **JST の平日 23:00**（`0 14 * * 1-5` UTC）。GitHub の遅延で深夜を過ぎても、版の日付（slug）は **JST 正午前の実行 → 前日の暦日** に固定（`digestEditionCalendarDate`）
+- digest の commit メッセージも **版の日付**（`scripts/print-edition-date.ts`）を使用（UTC の `date -u` は使わない）
 
 ## 動作確認チェックリスト
 
@@ -69,3 +70,5 @@ gh auth refresh -h github.com -s workflow
 | `ANTHROPIC_API_KEY is required` | Secrets / `.env` 未設定 | キーを登録 |
 | Anthropic API エラー | クレジット不足 or キー無効 | Anthropic Billing / キー再発行 |
 | `Anthropic response missing lead or picks` | LLM 応答の JSON 形式不正 | Actions ログを確認（`extractJson` で大半は吸収済み） |
+| digest は出たが日付がずれる（例: 6/2 なのに 6/1 欠番） | schedule 遅延 + 旧 slug が実行時 JST 日付だった | 修正済み: `digestEditionCalendarDate`。誤 slug は手動リネーム |
+| `[email] Skipped` / `RESEND_API_KEY is empty` | Secrets 名だけあり値が空 | `.env` のキーを `.\scripts\sync-github-email-secrets.ps1` で再登録。`Verify email secrets` ステップが通ること |

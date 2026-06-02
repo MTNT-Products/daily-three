@@ -23,9 +23,14 @@ export async function sendDigestEmails(params: {
   siteUrlEn: string;
   dateLabel: string;
 }) {
-  const apiKey = process.env.RESEND_API_KEY;
+  const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.EMAIL_FROM ?? 'Daily Three <onboarding@resend.dev>';
   if (!apiKey) {
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      throw new Error(
+        '[email] RESEND_API_KEY is empty in GitHub Actions. Set it under Settings → Secrets → Actions.',
+      );
+    }
     console.log('[email] Skipped (RESEND_API_KEY not set)');
     return;
   }
