@@ -31,6 +31,14 @@ CI / GitHub Pages ビルド: GitHub **Secrets** に `PUBLIC_SUPABASE_URL` と `P
 - 画面上は **自分の選択のみ** 表示（総数は非公開）
 - 全訪問者の票は DB に蓄積され、日次 digest の `rank.ts` が `source_id` 単位で集計
 
-## 5. 未設定時
+## 5. メール購読テーブルの削除（実施済みの場合）
+
+メール購読機能をやめたあと、リモート DB に `email_subscribers` が残っている場合は SQL Editor または CLI で [`003_drop_email_subscribers.sql`](../supabase/migrations/003_drop_email_subscribers.sql) を実行します。
+
+```powershell
+supabase db query -f supabase/migrations/003_drop_email_subscribers.sql --linked
+```
+
+## 6. 未設定時
 
 Supabase 未設定でもサイトはビルド・公開可能。Good/Bad 押下時に「利用できません」と表示され、digest は従来どおり `data/feedback.jsonl` があればそれを参照します。
