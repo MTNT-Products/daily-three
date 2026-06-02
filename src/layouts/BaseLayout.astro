@@ -3,9 +3,7 @@ import '../styles/global.css';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { localePath, sitePath } from '../lib/site-url';
 import FooterSupport from '../components/FooterSupport.astro';
-import FooterSubscribe from '../components/FooterSubscribe.astro';
 import { getSupportUrl } from '../lib/support';
-import { isSubscribeFormEnabled } from '../lib/subscribe-enabled';
 import LanguageSwitcher from '../components/LanguageSwitcher.astro';
 import { t, type Locale } from '../i18n/ui';
 
@@ -45,7 +43,7 @@ const canonical = Astro.url.href;
 const hreflangPath = path.replace(/^\//, '');
 const hrefJa = new URL(getRelativeLocaleUrl('ja', hreflangPath), Astro.site ?? Astro.url).href;
 const hrefEn = new URL(getRelativeLocaleUrl('en', hreflangPath), Astro.site ?? Astro.url).href;
-const showFooterEngagement = Boolean(getSupportUrl() || isSubscribeFormEnabled());
+const showFooterEngagement = Boolean(getSupportUrl());
 const feedJa = new URL(sitePath('ja/feed.xml'), Astro.site ?? Astro.url).href;
 const feedEn = new URL(sitePath('en/feed.xml'), Astro.site ?? Astro.url).href;
 const ogLocale = locale === 'ja' ? 'ja_JP' : 'en_US';
@@ -109,7 +107,6 @@ const twitterCard = ogImage ? 'summary_large_image' : 'summary';
         showFooterEngagement && (
           <div class="site-footer-engagement">
             <FooterSupport locale={locale} />
-            <FooterSubscribe locale={locale} />
           </div>
         )
       }

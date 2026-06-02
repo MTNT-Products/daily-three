@@ -7,7 +7,7 @@
 3. Settings → Secrets → Actions に登録:
    - `ANTHROPIC_API_KEY`（本番: Claude Haiku 選定・日本語要約）
    - `SITE_URL` = `https://MTNT-Products.github.io/daily-three`
-   - 任意: `ANTHROPIC_MODEL`, `RESEND_API_KEY`, `EMAIL_TO`, `EMAIL_FROM`
+   - 任意: `ANTHROPIC_MODEL`
 4. Actions → **Daily Digest and Deploy** → **Run workflow** で確認
 
 公開 URL: https://MTNT-Products.github.io/daily-three/
@@ -71,4 +71,3 @@ gh auth refresh -h github.com -s workflow
 | Anthropic API エラー | クレジット不足 or キー無効 | Anthropic Billing / キー再発行 |
 | `Anthropic response missing lead or picks` | LLM 応答の JSON 形式不正 | Actions ログを確認（`extractJson` で大半は吸収済み） |
 | digest は出たが日付がずれる（例: 6/2 なのに 6/1 欠番） | schedule 遅延 + 旧 slug が実行時 JST 日付だった | 修正済み: `digestEditionCalendarDate`。誤 slug は手動リネーム |
-| `[email] Skipped` / `RESEND_API_KEY is empty` | Secrets 名だけあり値が空 | `.env` のキーを `.\scripts\sync-github-email-secrets.ps1` で再登録。`Verify email secrets` ステップが通ること |

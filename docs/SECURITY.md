@@ -8,7 +8,6 @@ API キーなどの秘密情報が漏れないよう、リポジトリ運用と 
 |------|------|
 | `ANTHROPIC_API_KEY` | digest 用 Claude API（課金キー） |
 | `SUPABASE_SERVICE_ROLE_KEY` | digest 時の投票集計（DB 全権限） |
-| `RESEND_API_KEY` | 任意のメール通知 |
 
 これらは **GitHub Actions → Secrets** またはローカルの **`.env`** のみ（`.env` は `.gitignore` 済み）。
 

@@ -12,7 +12,6 @@ import {
 } from './digest-schedule.js';
 import { publishDigest } from './publish.js';
 import { enrichImages } from './ogp.js';
-import { sendDigestEmails } from './email.js';
 import type { SourcesFile } from './types.js';
 
 const dryRun = process.argv.includes('--dry-run');
@@ -64,9 +63,6 @@ async function main() {
   const edition = digestEditionCalendarDate(now);
   const publishDate = digestPublishDate(now);
   console.log(`[digest] Edition date (JST): ${edition}`);
-  const siteBase = (process.env.SITE_URL ?? 'https://example.com').replace(/\/$/, '');
-  const siteUrlJa = `${siteBase}/ja/`;
-  const siteUrlEn = `${siteBase}/en/`;
 
   if (dryRun) {
     console.log(JSON.stringify({ ja, en }, null, 2));
@@ -88,13 +84,6 @@ async function main() {
   }
 
   markSeen(ja.articles.map((a) => a.url));
-  await sendDigestEmails({
-    ja: { articles: ja.articles, lead: ja.lead },
-    en: { articles: en.articles, lead: en.lead ?? '' },
-    siteUrlJa,
-    siteUrlEn,
-    dateLabel: edition,
-  });
 }
 
 main().catch((e) => {

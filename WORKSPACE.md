@@ -33,10 +33,7 @@ npm run build        # 静的ビルド
 
 - [docs/PROMOTION.md](docs/PROMOTION.md) — 90日プラン・KPI・技術施策一覧
 - [docs/SOCIAL-TEMPLATES.md](docs/SOCIAL-TEMPLATES.md) — X / LinkedIn「1日1投稿」テンプレ（日英）
-- [docs/SUBSCRIBE.md](docs/SUBSCRIBE.md) — メール購読の設計メモ
-- [mockups/subscribe-cta.html](mockups/subscribe-cta.html) — BMC + 購読 CTA 比較（ブラウザで開く）
-
-サイト側: RSS、OGP、JSON-LD 実装済み。メール購読はフッター **案 A**（Supabase + Resend、[docs/SUBSCRIBE.md](docs/SUBSCRIBE.md)）。
+サイト側: RSS、OGP、JSON-LD 実装済み。再訪導線は RSS と [docs/SUPPORT.md](docs/SUPPORT.md) の BMC。
 
 ## ディレクトリ構成（要点）
 

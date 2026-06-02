@@ -25,18 +25,12 @@
 
 CI / GitHub Pages ビルド: GitHub **Secrets** に `PUBLIC_SUPABASE_URL` と `PUBLIC_SUPABASE_ANON_KEY` も登録（`SUPABASE_*` と同じ値でよい）。
 
-## 4. メール購読（002）
-
-1. SQL Editor で [`002_email_subscribers.sql`](../supabase/migrations/002_email_subscribers.sql) を実行
-2. フッターに購読フォームが表示される（`PUBLIC_SUPABASE_*` 設定時）
-3. digest CI が `RESEND_API_KEY` 付きで購読者にメール送信 — 詳細は [SUBSCRIBE.md](SUBSCRIBE.md)
-
-## 5. 動作（Good / Bad）
+## 4. 動作（Good / Bad）
 
 - 訪問者は匿名ログイン後、記事 URL ごとに Good / Bad を 1 票
 - 画面上は **自分の選択のみ** 表示（総数は非公開）
 - 全訪問者の票は DB に蓄積され、日次 digest の `rank.ts` が `source_id` 単位で集計
 
-## 6. 未設定時
+## 5. 未設定時
 
 Supabase 未設定でもサイトはビルド・公開可能。Good/Bad 押下時に「利用できません」と表示され、digest は従来どおり `data/feedback.jsonl` があればそれを参照します。

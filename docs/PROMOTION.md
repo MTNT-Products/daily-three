@@ -50,9 +50,6 @@ Google [SEO Starter Guide — Promote your website](https://developers.google.co
 
 ### 第3〜6週：所有チャネル（再訪の導線）
 
-- [ ] 通知メール（Resend）の件名・本文が「今日の3件」と分かる形になっているか確認（[DEPLOY.md](DEPLOY.md) の Secrets）
-- [ ] メール購読 CTA の案を決める → [`mockups/subscribe-cta.html`](../mockups/subscribe-cta.html) を比較（設計: [SUBSCRIBE.md](SUBSCRIBE.md)）
-- [x] フッター購読フォーム（Supabase RPC + Resend 配信）— [SUBSCRIBE.md](SUBSCRIBE.md) の SQL・Secrets を確認
 - [ ] Feedly 等で自分の RSS を購読し、digest 公開後に項目が増えるか確認する
 - [ ] [SOCIAL-TEMPLATES.md](SOCIAL-TEMPLATES.md) を開き、**平日1投稿**（3件のうち1件だけ）を開始する
   - [ ] 曜日ごとに X か LinkedIn のどちらを主軸にするか決める（両方同時は負荷大）
@@ -91,7 +88,6 @@ Google [SEO Starter Guide — Promote your website](https://developers.google.co
 |------|----------|------|
 | 検索表示・クリック | Search Console | 週1回で十分 |
 | RSS 購読 | Feedly 等 | 主観でも可 |
-| メール | Resend ダッシュボード | 使っている場合 |
 | SNS | 各プラットフォームの投稿インサイト | フォロワー数より「保存・リンククリック」 |
 | 選定品質 | Good / Bad 集計 | digest 重みに反映済み |
 
@@ -99,6 +95,5 @@ Google [SEO Starter Guide — Promote your website](https://developers.google.co
 
 ## 次の改善候補（コード）
 
-- 購読フォーム UI（メールアドレス収集 — オプトイン必須）
 - `og-default` 用の静的画像（記事画像がない日のシェア用）
 - IndexNow（Bing 向けの更新通知 — 任意）
