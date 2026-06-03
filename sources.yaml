@@ -1,24 +1,29 @@
 # RSS sources for Daily Three
 # weight: multiplier for rule-based scoring (adjusted by Good/Bad feedback over time)
 
+collection:
+  max_age_hours:
+    product: 48
+    automotive: 168 # 7 days — car-design publishers update less often than general design feeds
+
 sources:
   # cardesignnews.com/feed returns 404; Dezeen main feed covers transport
   - id: dezeen-cars
     name: Dezeen
     url: https://www.dezeen.com/feed/
-    weight: 1.3
-    category: automotive
-
-  - id: form-trends
-    name: Form Trends
-    url: https://www.formtrends.com/feed/
-    weight: 1.4
+    weight: 1.0
     category: automotive
 
   - id: designboom-auto
     name: Designboom
     url: https://www.designboom.com/feed/
-    weight: 1.2
+    weight: 1.0
+    category: automotive
+
+  - id: car-body-design
+    name: Car Body Design
+    url: https://www.carbodydesign.com/feed/
+    weight: 1.5
     category: automotive
 
   - id: core77
@@ -63,6 +68,17 @@ scoring:
     - celebrity
     - influencer
     - viral
+    # job / recruitment noise (e.g. legacy Form Trends-style listings)
+    - hiring
+    - vacancy
+    - vacancies
+    - job opening
+    - recruitment
+    - open position
+    - now hiring
+    - join our team
+    - send your cv
+    - send your resume
   low_priority_keywords:
     - facelift
     - minor change

@@ -1,19 +1,36 @@
 import Parser from 'rss-parser';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import type { RawArticle, SourceConfig } from './types.js';
+import type { CollectionConfig, RawArticle, SourceConfig } from './types.js';
 import { normalizeImageUrl } from './image-url.js';
 
 const parser = new Parser({ timeout: 15000 });
 const SEEN_PATH = join(process.cwd(), 'data', 'seen-urls.json');
-const MAX_AGE_HOURS = 48;
 
-export async function collectArticles(sources: SourceConfig[]): Promise<RawArticle[]> {
+const DEFAULT_MAX_AGE_HOURS: CollectionConfig['max_age_hours'] = {
+  product: 48,
+  automotive: 168,
+};
+
+export function resolveMaxAgeHours(collection?: CollectionConfig): CollectionConfig['max_age_hours'] {
+  return {
+    product: collection?.max_age_hours?.product ?? DEFAULT_MAX_AGE_HOURS.product,
+    automotive: collection?.max_age_hours?.automotive ?? DEFAULT_MAX_AGE_HOURS.automotive,
+  };
+}
+
+export async function collectArticles(
+  sources: SourceConfig[],
+  collection?: CollectionConfig,
+): Promise<RawArticle[]> {
   const seen = loadSeen();
   const articles: RawArticle[] = [];
-  const cutoff = Date.now() - MAX_AGE_HOURS * 60 * 60 * 1000;
+  const maxAgeHours = resolveMaxAgeHours(collection);
 
   for (const source of sources) {
+    const maxAge = maxAgeHours[source.category];
+    const cutoff = Date.now() - maxAge * 60 * 60 * 1000;
+
     try {
       const feed = await parser.parseURL(source.url);
       for (const item of feed.items) {

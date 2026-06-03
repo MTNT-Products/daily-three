@@ -23,6 +23,15 @@ Output JSON only:
 Exactly 3 picks. Flexible car vs product ratio by quality.
 If the user message lists recently covered stories, do not pick the same news event again (including follow-ups or another outlet on the same product launch).`;
 
+/** Job-listing titles often use "Designer – City" (legacy Form Trends-style feeds). */
+export function jobListingTitlePenalty(title: string): number {
+  if (/\bdesigner\s*[–-]\s*[A-Za-z]/i.test(title)) return 8;
+  if (/\b(senior|junior|lead|principal|graduate)\s+.{0,48}\bdesigner\b/i.test(title) && !/\bconcept\b/i.test(title)) {
+    return 8;
+  }
+  return 0;
+}
+
 export function ruleScore(articles: RawArticle[], config: SourcesFile, sourceWeights: Record<string, number>): ScoredArticle[] {
   const text = (a: RawArticle) => `${a.title} ${a.summary}`.toLowerCase();
 
@@ -30,6 +39,8 @@ export function ruleScore(articles: RawArticle[], config: SourcesFile, sourceWei
     .map((a) => {
       let score = (sourceWeights[a.sourceId] ?? 1) * 10;
       const t = text(a);
+
+      score -= jobListingTitlePenalty(a.title);
 
       for (const kw of config.scoring.boost_keywords) {
         if (t.includes(kw.toLowerCase())) score += 3;

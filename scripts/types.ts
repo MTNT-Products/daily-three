@@ -6,8 +6,16 @@ export interface SourceConfig {
   category: 'automotive' | 'product';
 }
 
+export interface CollectionConfig {
+  max_age_hours: {
+    automotive: number;
+    product: number;
+  };
+}
+
 export interface SourcesFile {
   sources: SourceConfig[];
+  collection?: CollectionConfig;
   scoring: {
     boost_keywords: string[];
     penalty_keywords: string[];
