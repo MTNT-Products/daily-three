@@ -13,7 +13,9 @@ function fetchHeadersFor(url: string): Record<string, string> {
   const headers: Record<string, string> = { 'User-Agent': BROWSER_UA };
   if (url.includes('static.dezeen.com')) headers.Referer = 'https://www.dezeen.com/';
   if (url.includes('designboom.com')) headers.Referer = 'https://www.designboom.com/';
-  if (url.includes('core77.com')) headers.Referer = 'https://www.core77.com/';
+  if (url.includes('core77.com') || url.includes('s3files.core77.com')) {
+    headers.Referer = 'https://www.core77.com/';
+  }
   return headers;
 }
 
@@ -120,6 +122,46 @@ export function expandDesignboomCandidates(url: string): string[] {
   }
 
   return [...out];
+}
+
+function core77PostId(pageUrl: string): string | undefined {
+  return pageUrl.match(/\/posts\/(\d+)\//)?.[1];
+}
+
+/** Core77 article HTML lists full-size S3 assets keyed by post id. */
+export async function fetchCore77Candidates(pageUrl: string): Promise<string[]> {
+  const postId = core77PostId(pageUrl);
+  if (!postId) return [];
+  try {
+    const res = await fetch(pageUrl, {
+      headers: fetchHeadersFor(pageUrl),
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const found = new Set<string>();
+    const needle = `_${postId}_`;
+
+    for (const m of html.matchAll(/https:\/\/s3files\.core77\.com\/[^"'\s>]+\.(?:jpg|jpeg|png|webp)/gi)) {
+      const url = m[0];
+      if (!url.includes(needle)) continue;
+      if (/\/profile_images\/|\/users\/|favicon|logo|avatar|icon/i.test(url)) continue;
+      found.add(url);
+    }
+
+    const ranked = [...found].sort((a, b) => scoreCore77Path(b) - scoreCore77Path(a));
+    return ranked;
+  } catch {
+    return [];
+  }
+}
+
+function scoreCore77Path(url: string): number {
+  if (/lead_n_spotlight\/.*lead_400/i.test(url)) return 2_000_000;
+  if (/lead_n_spotlight/i.test(url)) return 1_500_000;
+  if (/lead_small/i.test(url)) return 200_000;
+  if (/_81_\d+_/i.test(url)) return 800_000;
+  return 300_000;
 }
 
 export async function fetchDesignboomCandidates(pageUrl: string): Promise<string[]> {
@@ -340,6 +382,14 @@ export async function resolveHeroImage(
     return pickLargestReachableUrl([...new Set(normalized)]);
   }
 
+  if (sourceId?.includes('core77') || pageUrl.includes('core77.com')) {
+    const fromPage = await fetchCore77Candidates(pageUrl);
+    const seeds = seed ? [seed, ...fromPage] : fromPage;
+    const variants = seeds.flatMap((u) => [u, normalizeImageUrl(u, sourceId)]);
+    return pickLargestReachableUrl([...new Set(variants)]);
+  }
+
   if (!seed) return undefined;
-  return pickLargestReachableUrl([normalizeImageUrl(seed, sourceId)]);
+  const variants = [seed, normalizeImageUrl(seed, sourceId)];
+  return pickLargestReachableUrl([...new Set(variants)]);
 }

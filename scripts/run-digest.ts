@@ -23,7 +23,7 @@ async function main() {
   const sourceWeights = buildSourceWeights(config.sources, feedback);
 
   console.log('[digest] Collecting…');
-  const raw = await collectArticles(config.sources);
+  const raw = await collectArticles(config.sources, config.collection);
   console.log(`[digest] ${raw.length} new candidates`);
 
   const recent = loadRecentStories(7);
@@ -49,9 +49,16 @@ async function main() {
     en.articles[i].images = ja.articles[i]?.images;
     en.articles[i].video = ja.articles[i]?.video;
   }
+  const missingImages = ja.articles.filter((a) => !a.image);
   for (const a of ja.articles) {
     const n = a.images?.length ?? (a.image ? 1 : 0);
-    console.log(`[digest] media ${a.sourceId}: ${n} image(s)`);
+    console.log(`[digest] media ${a.sourceId}: ${n} image(s)${a.image ? '' : ' — MISSING'}`);
+  }
+  if (missingImages.length > 0) {
+    const titles = missingImages.map((a) => a.title).join('; ');
+    throw new Error(
+      `[digest] ${missingImages.length} article(s) have no reachable hero image after enrichment: ${titles}`,
+    );
   }
 
   const now = new Date();

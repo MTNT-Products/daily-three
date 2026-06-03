@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { normalizeImageUrl } from './image-url.js';
+import { imageUrlCandidates, normalizeImageUrl } from './image-url.js';
 import { pickLargestReachableUrl, resolveHeroImage } from './resolve-hero-image.js';
 import { fetchArticleMedia } from './scrape-media.js';
 import type { DigestArticle } from './types.js';
@@ -44,8 +44,8 @@ export async function fetchOgpImage(url: string, sourceId?: string): Promise<str
     const html = await res.text();
     const $ = cheerio.load(html);
     const candidates = collectOgpImageCandidates($, url);
-    const normalized = candidates.map((c) => normalizeImageUrl(c, sourceId));
-    return pickLargestReachableUrl([...new Set(normalized)]);
+    const variants = candidates.flatMap((c) => imageUrlCandidates(c, sourceId));
+    return pickLargestReachableUrl([...new Set(variants)]);
   } catch {
     return undefined;
   }
@@ -75,8 +75,8 @@ export async function enrichArticleMedia(article: DigestArticle): Promise<Digest
 
   let images = media.images;
   const reachable = await pickLargestReachableUrl(
-    [...new Set([hero, article.image, ...images].filter(Boolean) as string[])].map((u) =>
-      normalizeImageUrl(u, article.sourceId),
+    [...new Set([hero, article.image, ...images].filter(Boolean) as string[])].flatMap((u) =>
+      imageUrlCandidates(u, article.sourceId),
     ),
   );
   if (reachable) {

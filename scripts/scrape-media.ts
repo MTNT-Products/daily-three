@@ -3,6 +3,7 @@ import { isSquareCroppedImageUrl, normalizeImageUrl, scoreImageUrl } from './ima
 import {
   expandDezeenCandidates,
   expandDesignboomCandidates,
+  fetchCore77Candidates,
   fetchDesignboomCandidates,
   fetchDezeenRssCandidates,
   findDezeenFeedItemChunk,
@@ -38,6 +39,10 @@ export async function fetchArticleMedia(
 
   if (pageUrl.includes('designboom.com')) {
     candidates.push(...filterDesignboomArticle(pageUrl, await fetchDesignboomCandidates(pageUrl)));
+  }
+
+  if (sourceId?.includes('core77') || pageUrl.includes('core77.com')) {
+    candidates.push(...(await fetchCore77Candidates(pageUrl)));
   }
 
   if (sourceId?.includes('dezeen') || pageUrl.includes('dezeen.com')) {

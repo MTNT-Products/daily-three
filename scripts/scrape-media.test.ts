@@ -25,3 +25,12 @@ test('fetchArticleMedia picks html5 video on Designboom furny article', async ()
   assert.ok(media.video?.embedUrl.includes('furny-futurewave-home-robot'));
   assert.ok(media.images.length >= 1);
 });
+
+test('fetchArticleMedia resolves Core77 hero for matte black tool article', async () => {
+  const media = await fetchArticleMedia(
+    'https://www.core77.com/posts/144380/The-Japanese-Matte-Black-Tool-Trend-Came-from-the-LA-Car-Scene',
+    'core77',
+  );
+  assert.ok(media.images.length >= 1);
+  assert.match(media.images[0], /s3files\.core77\.com.*144380/);
+});

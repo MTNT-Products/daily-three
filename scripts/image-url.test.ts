@@ -86,3 +86,17 @@ test('expandDezeenCandidates derives hero URLs from square filename', () => {
     expanded.some((u) => u.includes('Ferrari-Luce-Jony-Ive-Marc-Newson-LoveFrom_dezeen_2364_col_hero')),
   );
 });
+
+test('normalizeImageUrl preserves Core77 lead_400 filenames', async () => {
+  const { normalizeImageUrl } = await import('./image-url.js');
+  const lead =
+    'https://s3files.core77.com/blog/images/lead_n_spotlight/1836824_lead_400_144380_.jpg';
+  assert.equal(normalizeImageUrl(lead, 'core77'), lead);
+});
+
+test('imageUrlCandidates keeps raw URL when normalization would break Core77 assets', async () => {
+  const { imageUrlCandidates } = await import('./image-url.js');
+  const lead =
+    'https://s3files.core77.com/blog/images/lead_n_spotlight/1836824_lead_400_144380_.jpg';
+  assert.deepEqual(imageUrlCandidates(lead, 'core77'), [lead]);
+});

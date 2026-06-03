@@ -31,8 +31,7 @@ export function normalizeImageUrl(url: string, sourceId?: string): string {
   u = u.replace(/-500x400-/i, '-');
   u = u.replace(/-(\d{3,4})x(\d{3,4})-(?=[^/]*\.[a-z]+$)/i, '-');
 
-  // Core77
-  u = u.replace(/lead_400/g, 'lead');
+  // Core77 — lead_400 is part of the real S3 filename, not a downscale suffix
   u = u.replace(/\/thumb\//i, '/');
 
   if (sourceId?.includes('dezeen') && u.includes('static.dezeen.com') && u.startsWith('http://')) {
@@ -44,6 +43,14 @@ export function normalizeImageUrl(url: string, sourceId?: string): string {
   }
 
   return u;
+}
+
+/** Raw and normalized variants for reachability probes (normalization can break some hosts). */
+export function imageUrlCandidates(raw: string, sourceId?: string): string[] {
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+  const normalized = normalizeImageUrl(trimmed, sourceId);
+  return [...new Set([trimmed, normalized].filter(Boolean))];
 }
 
 export function scoreImageUrl(url: string): number {
