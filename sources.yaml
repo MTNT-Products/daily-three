@@ -26,6 +26,18 @@ sources:
     weight: 1.5
     category: automotive
 
+  - id: auto-express
+    name: Auto Express
+    url: https://www.autoexpress.co.uk/feeds/all
+    weight: 0.9
+    category: automotive
+
+  - id: motor1-design
+    name: Motor1 Design
+    url: https://www.motor1.com/rss/category/design/
+    weight: 1.2
+    category: automotive
+
   - id: core77
     name: Core77
     url: https://www.core77.com/rss.xml
@@ -79,6 +91,10 @@ scoring:
     - join our team
     - send your cv
     - send your resume
+    # Auto Express / mass-market feed noise
+    - deal of the day
+    - car hunter
+    - for sale on
   low_priority_keywords:
     - facelift
     - minor change
