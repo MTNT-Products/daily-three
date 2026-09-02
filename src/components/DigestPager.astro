@@ -1,0 +1,38 @@
+---
+import { localePath } from '../lib/site-url';
+import { t, type Locale } from '../i18n/ui';
+import type { AdjacentDigest } from '../lib/digest';
+
+interface Props {
+  locale: Locale;
+  older: AdjacentDigest | null;
+  newer: AdjacentDigest | null;
+}
+
+const { locale, older, newer } = Astro.props;
+---
+
+<nav class="digest-pager" aria-label={t(locale, 'digestPagerAria')}>
+  {
+    older ? (
+      <a class="digest-pager-link" href={localePath(locale, `digest/${older.slug}/`)} title={older.title}>
+        {t(locale, 'digestPrev')}
+      </a>
+    ) : (
+      <span class="digest-pager-link is-disabled" aria-disabled="true">
+        {t(locale, 'digestPrev')}
+      </span>
+    )
+  }
+  {
+    newer ? (
+      <a class="digest-pager-link" href={localePath(locale, `digest/${newer.slug}/`)} title={newer.title}>
+        {t(locale, 'digestNext')}
+      </a>
+    ) : (
+      <span class="digest-pager-link is-disabled" aria-disabled="true">
+        {t(locale, 'digestNext')}
+      </span>
+    )
+  }
+</nav>

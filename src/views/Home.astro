@@ -1,8 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from '../components/ArticleCard.astro';
-import { localePath } from '../lib/site-url';
-import { digestSlugFromEntryId, getDigestsForLocale } from '../lib/digest';
+import DigestPager from '../components/DigestPager.astro';
+import { adjacentDigests, digestSlugFromEntryId, getDigestsForLocale } from '../lib/digest';
 import { absoluteSiteUrl, pickDigestOgImage, webSiteJsonLd } from '../lib/seo';
 import { t, type Locale } from '../i18n/ui';
 
@@ -10,6 +10,7 @@ const locale = Astro.currentLocale as Locale;
 const digests = await getDigestsForLocale(locale);
 const latest = digests[0];
 const latestSlug = latest ? digestSlugFromEntryId(latest.id) : '';
+const pager = latestSlug ? adjacentDigests(digests, latestSlug) : { older: null, newer: null };
 const ogImage = latest ? pickDigestOgImage(latest.data.articles) : undefined;
 const jsonLd = webSiteJsonLd({
   siteUrl: absoluteSiteUrl(Astro.site, locale),
@@ -35,9 +36,7 @@ const jsonLd = webSiteJsonLd({
           <h2 id="home-preview-title">
             {t(locale, 'homePreview')} — {latest.data.title}
           </h2>
-          <a class="home-preview-link" href={localePath(locale, `digest/${latestSlug}/`)}>
-            {t(locale, 'homeReadFull')}
-          </a>
+          <DigestPager locale={locale} older={pager.older} newer={pager.newer} />
         </div>
         <p class="digest-lead">{latest.data.lead}</p>
         {latest.data.articles.map((article, index) => (

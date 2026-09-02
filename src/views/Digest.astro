@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from '../components/ArticleCard.astro';
+import DigestPager from '../components/DigestPager.astro';
 import { getCollection, render } from 'astro:content';
-import { digestSlugFromEntryId } from '../lib/digest';
+import { adjacentDigests, digestSlugFromEntryId, getDigestsForLocale } from '../lib/digest';
 import { digestSeoFromEntry } from '../lib/seo';
 import type { Locale } from '../i18n/ui';
 
@@ -16,6 +17,8 @@ const slug = digestSlugFromEntryId(entry.id);
 const { Content } = await render(entry);
 
 const all = await getCollection('digest');
+const localeDigests = await getDigestsForLocale(locale);
+const pager = adjacentDigests(localeDigests, slug);
 const altLocale: Locale = locale === 'ja' ? 'en' : 'ja';
 const hasAlt = all.some((e) => e.id === `${altLocale}/${slug}`);
 const alternateLocales = hasAlt ? (['ja', 'en'] as Locale[]) : [locale];
@@ -31,7 +34,10 @@ const { ogImage, jsonLd } = digestSeoFromEntry(entry, locale, slug, Astro.site);
   ogType="article"
   jsonLd={jsonLd}
 >
-  <p class="digest-meta">{entry.data.title}</p>
+  <div class="digest-page-head">
+    <p class="digest-meta">{entry.data.title}</p>
+    <DigestPager locale={locale} older={pager.older} newer={pager.newer} />
+  </div>
   <p class="digest-lead">{entry.data.lead}</p>
   {entry.data.articles.map((article, index) => (
     <ArticleCard article={article} index={index} digestSlug={slug} locale={locale} />
