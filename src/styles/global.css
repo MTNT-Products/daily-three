@@ -223,8 +223,30 @@ main {
   overflow: hidden;
 }
 
+.article-media-nav,
+.article-media-counter,
+.article-media-slide {
+  /* Arrows sit at 50% of a variable-height image. If they (or a swapped
+     slide) become the scroll-anchor, the page teleports to follow them. */
+  overflow-anchor: none;
+}
+
 .article-media-slide[hidden] {
   display: none !important;
+}
+
+.article-media.has-carousel .article-media-slide:not(.is-active) {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.article-media.has-carousel .article-media-slide.is-active {
+  position: relative;
+  z-index: 1;
+  visibility: visible;
 }
 
 .article-media-slide iframe {

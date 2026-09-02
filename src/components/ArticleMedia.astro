@@ -37,12 +37,16 @@ const uid = `media-${Math.random().toString(36).slice(2, 9)}`;
   <div class="article-media-viewport">
     {
       slides.map((src, i) => (
-        <figure class="article-media-slide" data-slide-index={i} hidden={i !== 0 ? true : undefined}>
+        <figure
+          class={`article-media-slide${i === 0 ? ' is-active' : ''}`}
+          data-slide-index={i}
+          inert={hasCarousel && i !== 0 ? true : undefined}
+        >
           <img
             class="article-img"
             src={src}
             alt=""
-            loading={priority && i === 0 ? 'eager' : 'lazy'}
+            loading={hasCarousel || (priority && i === 0) ? 'eager' : 'lazy'}
             decoding="async"
             fetchpriority={priority && i === 0 ? 'high' : undefined}
             data-fallback
@@ -53,9 +57,9 @@ const uid = `media-${Math.random().toString(36).slice(2, 9)}`;
     {
       video ? (
         <figure
-          class="article-media-slide article-media-video"
+          class={`article-media-slide article-media-video${slides.length === 0 ? ' is-active' : ''}`}
           data-slide-index={slides.length}
-          hidden={slides.length > 0 ? true : undefined}
+          inert={hasCarousel && slides.length > 0 ? true : undefined}
         >
           {
             video.provider === 'html5' ? (
@@ -104,26 +108,33 @@ const uid = `media-${Math.random().toString(36).slice(2, 9)}`;
 <script>
   function initMediaCarousels() {
     document.querySelectorAll('.article-media.has-carousel').forEach((root) => {
+      const el = root as HTMLElement;
+      if (el.dataset.carouselReady) return;
+      el.dataset.carouselReady = '1';
+
       const slides = [...root.querySelectorAll('.article-media-slide')];
       if (slides.length <= 1) return;
 
-      let index = slides.findIndex((s) => !s.hasAttribute('hidden'));
+      let index = slides.findIndex((s) => s.classList.contains('is-active'));
       if (index < 0) index = 0;
 
       const counter = root.querySelector('.article-media-counter');
-      const loadFailed =
-        (root as HTMLElement).dataset.loadFailed ?? 'Could not load image';
 
       const show = (i: number) => {
         index = (i + slides.length) % slides.length;
         slides.forEach((s, j) => {
-          if (j === index) s.removeAttribute('hidden');
-          else s.setAttribute('hidden', '');
+          const on = j === index;
+          s.classList.toggle('is-active', on);
+          if (on) s.removeAttribute('inert');
+          else s.setAttribute('inert', '');
         });
         if (counter) counter.textContent = `${index + 1} / ${slides.length}`;
       };
 
       root.querySelectorAll('.article-media-nav').forEach((btn) => {
+        /* Click-focus would make the arrow the scroll-anchor (it sits at 50%
+           of a variable-height image). Keep focus where it was. */
+        btn.addEventListener('pointerdown', (e) => e.preventDefault());
         btn.addEventListener('click', () => {
           const dir = Number((btn as HTMLButtonElement).dataset.dir ?? 1);
           show(index + dir);
