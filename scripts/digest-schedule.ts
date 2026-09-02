@@ -75,6 +75,16 @@ export function isDigestWeekday(now = new Date()): boolean {
   return d >= 1 && d <= 5;
 }
 
+/**
+ * Whether the *edition* (not wall-clock now) is Mon–Fri in Asia/Tokyo.
+ * GitHub often starts the Friday 23:00 JST job after midnight Saturday;
+ * `isDigestWeekday(now)` would skip, even though the slug is still Friday.
+ */
+export function isDigestEditionWeekday(now = new Date()): boolean {
+  const ymd = digestEditionCalendarDate(now);
+  return isDigestWeekday(new Date(`${ymd}T12:00:00+09:00`));
+}
+
 /** Noon JST on the digest edition day (stable when CI runs after midnight JST). */
 export function digestPublishDate(now = new Date()): Date {
   const ymd = digestEditionCalendarDate(now);

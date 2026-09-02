@@ -8,7 +8,7 @@ import { getLlmConfig } from './llm-config.js';
 import {
   digestEditionCalendarDate,
   digestPublishDate,
-  isDigestWeekday,
+  isDigestEditionWeekday,
 } from './digest-schedule.js';
 import { publishDigest } from './publish.js';
 import { enrichImages } from './ogp.js';
@@ -18,6 +18,12 @@ const dryRun = process.argv.includes('--dry-run');
 const forceRun = process.argv.includes('--force');
 
 async function main() {
+  const now = new Date();
+  if (!dryRun && !forceRun && !isDigestEditionWeekday(now)) {
+    console.log('[digest] Skipping: weekend edition in Asia/Tokyo (pass --force to override)');
+    return;
+  }
+
   const config = parse(readFileSync('sources.yaml', 'utf-8')) as SourcesFile;
   const feedback = await loadFeedbackWeights();
   const sourceWeights = buildSourceWeights(config.sources, feedback);
@@ -59,12 +65,6 @@ async function main() {
     throw new Error(
       `[digest] ${missingImages.length} article(s) have no reachable hero image after enrichment: ${titles}`,
     );
-  }
-
-  const now = new Date();
-  if (!dryRun && !forceRun && !isDigestWeekday(now)) {
-    console.log('[digest] Skipping: weekend in Asia/Tokyo (pass --force to override)');
-    return;
   }
 
   const edition = digestEditionCalendarDate(now);
