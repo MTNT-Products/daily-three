@@ -38,7 +38,7 @@ export function disclaimerSections(locale: Locale): { h2?: string; html: string 
       },
       {
         h2: '5. 著作権',
-        html: '<p>各記事の著作権は原著者・出版社に帰属します。当サイトは要約とリンクによる紹介を行い、全文転載は行いません。</p>',
+        html: '<p>各記事の著作権は原著者・出版社に帰属します。当サイトは要約とリンクによる紹介を行い、全文転載は行いません。カードに表示する写真は、各媒体が公開している画像 URL を参照しており、当サイトには保存していません。</p>',
       },
     ];
   }
@@ -65,7 +65,7 @@ export function disclaimerSections(locale: Locale): { h2?: string; html: string 
     },
     {
       h2: '5. Copyright',
-      html: '<p>Rights in linked articles belong to their publishers. We provide summaries and links, not full reproduction.</p>',
+      html: '<p>Rights in linked articles belong to their publishers. We provide summaries and links, not full reproduction. Photos on the cards use image URLs published by those sites; we do not host the files.</p>',
     },
   ];
 }
