@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "draftedAt": "2026-09-05T04:14:33.101Z",
+    "digestDate": "2026-09-04",
+    "articleIndex": 1,
+    "articleUrl": "https://www.dezeen.com/2026/09/04/fitbit-luffu-link-ai-powered-wristband-health-family/",
+    "pickReason": "rotation",
+    "jaBody": "家族全体の健康管理を一つのデバイスで追跡する設計。色選択で個別化しながら、統一されたUIで一括管理。ウェアラブルの新しい使用シーン。",
+    "enBody": "Single device, multiple trackers. Unified interface for family health monitoring, personalized through color choice. A fresh approach to wearable utility.",
+    "jaText": "【Daily Three】9/4(金)\nFitbit創業者が家族向けAI搭載リストバンド「Luffu Link」を発表\n\n家族全体の健康管理を一つのデバイスで追跡する設計。色選択で個別化しながら、統一されたUIで一括管理。ウェアラブルの新しい使用シーン。\n\n出典: Dezeen",
+    "enText": "Fitbit Founders Launch Luffu Link: Multi-User AI-Powered Health Wristband\n\nSingle device, multiple trackers. Unified interface for family health monitoring, personalized through color choice. A fresh approach to wearable utility.\n\nSource: Dezeen",
+    "issues": [
+      {
+        "level": "warn",
+        "code": "unsourced-en",
+        "message": "digest に無い語: Single, Unified"
+      }
+    ]
+  }
+]
