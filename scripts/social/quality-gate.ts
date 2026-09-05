@@ -91,14 +91,34 @@ const KATAKANA_COMMON_WORDS = new Set([
   'メッセージ', 'トレンド', 'ニュース', 'インテリア', 'エクステリア', 'サステナブル', 'エンジニア',
 ]);
 
-/** Katakana runs, proper-noun-ish Latin words and numbers — the terms worth fact-checking. */
+/** All caps (JLR), internal caps (FreeBuds) or a digit (260kW) — a name even at a sentence start. */
+function looksLikeAName(word: string): boolean {
+  return !/[a-z]/.test(word) || /[a-z][A-Z]/.test(word) || /\d/.test(word);
+}
+
+/**
+ * Katakana runs, proper-noun-ish Latin words and numbers — the terms worth fact-checking.
+ *
+ * A capitalised English word at the start of a sentence carries no information — "Single",
+ * "Unified" and "The" are capitalised by position, not because they name anything. Those are
+ * skipped unless their shape marks them as a name anyway.
+ */
 export function significantTerms(text: string): string[] {
   const katakana = (text.match(/[ァ-ヶー]{3,}/g) ?? []).filter(
     (w) => !KATAKANA_COMMON_WORDS.has(w),
   );
-  const latin = (text.match(/[A-Z][A-Za-z0-9.-]{2,}/g) ?? []).filter(
-    (w) => !ENGLISH_LEAD_WORDS.has(w.toLowerCase()),
-  );
+
+  const latin: string[] = [];
+  const latinPattern = /[A-Z][A-Za-z0-9.-]{2,}/g;
+  for (const m of text.matchAll(latinPattern)) {
+    const word = m[0];
+    if (ENGLISH_LEAD_WORDS.has(word.toLowerCase())) continue;
+    const before = text.slice(0, m.index).trimEnd();
+    const sentenceInitial = before === '' || /[.!?:;]$/.test(before);
+    if (sentenceInitial && !looksLikeAName(word)) continue;
+    latin.push(word);
+  }
+
   const numbers = text.match(/\d+(?:[.,]\d+)?/g) ?? [];
   return [...new Set([...katakana, ...latin, ...numbers])];
 }

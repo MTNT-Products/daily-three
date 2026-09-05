@@ -141,3 +141,25 @@ test('a reply without a link is a blocking issue', () => {
   });
   assert.ok(issues.some((i) => i.code === 'reply-no-url' && i.level === 'error'));
 });
+
+test('sentence-initial English words are not mistaken for invented names', () => {
+  // Regression: the 2026-09-04 draft flagged "Single" and "Unified" as unsourced.
+  assert.deepEqual(
+    significantTerms(
+      'Single device, multiple trackers. Unified interface for family health monitoring.',
+    ),
+    [],
+  );
+});
+
+test('a name is still caught when its shape says so, even at a sentence start', () => {
+  assert.deepEqual(significantTerms('JLR builds it. FreeBuds ship later. 260kW on tap.'), [
+    'JLR',
+    'FreeBuds',
+    '260',
+  ]);
+});
+
+test('a proper noun mid-sentence is still caught', () => {
+  assert.ok(significantTerms('It undercuts the Porsche by a wide margin.').includes('Porsche'));
+});
