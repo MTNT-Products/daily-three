@@ -13,7 +13,7 @@ export default defineConfig({
     },
   },
   integrations: [sitemap()],
-  // ?????504 Outdated Optimize Dep??????????????????
+  // 開発時の「504 Outdated Optimize Dep」ノイズを防ぐ（本番には影響なし）
   devToolbar: { enabled: false },
   env: {
     schema: {

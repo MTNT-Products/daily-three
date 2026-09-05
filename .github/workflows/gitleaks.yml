@@ -8,14 +8,25 @@ on:
 permissions:
   contents: read
 
+# gitleaks-action requires a paid licence under an Organization, so this runs the
+# gitleaks CLI (MIT) directly instead. See docs/SECURITY.md.
+env:
+  GITLEAKS_VERSION: 8.30.1
+
 jobs:
   gitleaks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install gitleaks
+        run: |
+          curl -sSfL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf gitleaks.tar.gz gitleaks
+          ./gitleaks version
+
+      - name: Scan full history
+        run: ./gitleaks git . --redact --verbose
