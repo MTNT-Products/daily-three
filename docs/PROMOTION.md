@@ -20,6 +20,8 @@ Google [SEO Starter Guide — Promote your website](https://developers.google.co
 |--------------|------|
 | [SEARCH-CONSOLE.md](SEARCH-CONSOLE.md) | Google Search Console の登録 |
 | [SOCIAL-TEMPLATES.md](SOCIAL-TEMPLATES.md) | X / LinkedIn の「1日1投稿」テンプレ（日英） |
+| [X-AUTOMATION.md](X-AUTOMATION.md) | X の半自動運用（下書き自動生成 → Slack → 1タップ投稿） |
+| [X-SETUP.md](X-SETUP.md) | 上記を動かすためのセットアップ手順 |
 | [DEPLOY.md](DEPLOY.md) | デプロイ・Secrets |
 | [SUPPORT.md](SUPPORT.md) | Buy Me a Coffee |
 

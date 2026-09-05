@@ -25,6 +25,31 @@ export async function loadFeedbackWeightsFromSupabase(): Promise<Record<string, 
   return weights;
 }
 
+/** Good votes per article URL — used to choose which of the three to feature on X. */
+export async function loadGoodCountsByUrl(urls: string[]): Promise<Record<string, number>> {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key || urls.length === 0) return {};
+
+  const supabase = createClient(url, key, { auth: { persistSession: false } });
+  const { data, error } = await supabase
+    .from('feedback')
+    .select('url, verdict')
+    .in('url', urls)
+    .eq('verdict', 'good');
+
+  if (error) {
+    console.warn('[feedback] Supabase good-count read failed:', error.message);
+    return {};
+  }
+
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    counts[row.url] = (counts[row.url] ?? 0) + 1;
+  }
+  return counts;
+}
+
 /** Fallback when Supabase is not configured in CI. */
 export function loadFeedbackWeightsFromJsonl(): Record<string, number> {
   const path = join(process.cwd(), 'data', 'feedback.jsonl');

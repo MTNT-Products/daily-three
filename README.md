@@ -67,6 +67,8 @@ push / PR ?? [gitleaks](https://github.com/gitleaks/gitleaks) ???????[`.github/w
 
 ???90???? / SNS ????: [docs/PROMOTION.md](docs/PROMOTION.md) � [docs/SOCIAL-TEMPLATES.md](docs/SOCIAL-TEMPLATES.md)
 
+X (Twitter): [docs/X-AUTOMATION.md](docs/X-AUTOMATION.md) / [docs/X-SETUP.md](docs/X-SETUP.md)
+
 
 ????????Buy Me a Coffee?: [docs/SUPPORT.md](docs/SUPPORT.md) ? Secret `PUBLIC_BMC_URL`
 

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500">
+  <rect width="1500" height="500" fill="#0B0B0B"/>
+  <text x="750" y="226" fill="#FFFFFF" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="92"
+        font-weight="700" text-anchor="middle" letter-spacing="-2">Daily Three</text>
+  <text x="750" y="292" fill="#B8B8B8" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="34"
+        text-anchor="middle">Three car &amp; product design stories, every weekday.</text>
+  <text x="750" y="348" fill="#6E6E6E" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-size="25"
+        text-anchor="middle" letter-spacing="2">CURATED BY AN INDUSTRIAL DESIGNER</text>
+</svg>
