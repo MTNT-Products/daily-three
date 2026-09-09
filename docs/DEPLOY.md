@@ -7,7 +7,11 @@
 3. Settings → Secrets → Actions に登録:
    - `ANTHROPIC_API_KEY`（本番: Claude Haiku 選定・日本語要約）
    - `SITE_URL` = `https://MTNT-Products.github.io/daily-three`
-   - 任意: `ANTHROPIC_MODEL`
+   - `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY`（サイトの Good / Bad ボタン。
+     未設定でもビルドは通りますが、ボタンが無言で効かなくなります）
+   - `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY`（digest の重み付けと X の記事選定）
+   - `SLACK_WEBHOOK_URL`（X 下書きの通知先）
+   - 任意: `ANTHROPIC_MODEL`, `PUBLIC_BMC_URL`
 4. Actions → **Daily Digest and Deploy** → **Run workflow** で確認
 
 公開 URL: https://MTNT-Products.github.io/daily-three/
@@ -58,7 +62,7 @@ gh auth refresh -h github.com -s workflow
 
 ワークフロー実行後、Actions ログで次を確認します。
 
-1. **`Run digest pipeline`** — `[digest] Picker: anthropic (model: ...)` と出ること
+1. **`Run digest pipeline`** — `[digest] Picker: anthropic bilingual (model: ...)` と出ること
 2. **`Commit digest and seen URLs`** — 新しい `src/content/digest/YYYY-MM-DD.md` が commit されること
 3. 公開 URL — https://MTNT-Products.github.io/daily-three/ で最新ダイジェストが表示されること
 4. ダイジェスト本文 — `lead` と各記事 `summary` が **日本語** であること

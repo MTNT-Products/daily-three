@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "astro dev",
     "dev:clean": "node -e \"require('fs').rmSync('node_modules/.vite',{recursive:true,force:true})\" && astro dev",
-    "build": "astro build && node scripts/copy-root-redirect.mjs",
+    "build": "node scripts/check-public-env.mjs && astro build && node scripts/copy-root-redirect.mjs",
+    "typecheck": "tsc --noEmit",
     "preview": "astro preview",
     "digest": "tsx scripts/run-digest.ts",
     "digest:dry": "tsx scripts/run-digest.ts --dry-run",
@@ -27,7 +28,8 @@
     "test:dedup": "tsx --test scripts/story-dedup.test.ts",
     "test:media": "tsx --test scripts/scrape-media.test.ts",
     "workflow:dispatch": "powershell -ExecutionPolicy Bypass -File scripts/trigger-workflow.ps1",
-    "astro": "astro"
+    "astro": "astro",
+    "test:live": "tsx --test scripts/scrape-media.live.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
@@ -41,6 +43,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
-    "tsx": "^4.22.3"
+    "tsx": "^4.22.3",
+    "typescript": "^7.0.2"
   }
 }

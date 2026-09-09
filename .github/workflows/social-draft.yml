@@ -29,6 +29,7 @@ jobs:
     # Kill switch: set repository variable SOCIAL_ENABLED to "false" to stop drafting.
     if: ${{ vars.SOCIAL_ENABLED != 'false' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
 
@@ -47,10 +48,19 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          # Passed through the environment, not interpolated into the script: expanded
+          # inline, a crafted dispatch input ran as shell alongside these secrets.
+          DIGEST_DATE: ${{ inputs.date }}
+          FORCE_DRAFT: ${{ inputs.force }}
         run: |
           ARGS=""
-          if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date=${{ inputs.date }}"; fi
-          if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
+          if [ -n "$DIGEST_DATE" ]; then
+            case "$DIGEST_DATE" in
+              [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ARGS="--date=$DIGEST_DATE" ;;
+              *) echo "date must be YYYY-MM-DD, got: $DIGEST_DATE" >&2; exit 1 ;;
+            esac
+          fi
+          if [ "$FORCE_DRAFT" = "true" ]; then ARGS="$ARGS --force"; fi
           npm run social:draft -- $ARGS
 
       - name: Commit social log

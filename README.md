@@ -34,7 +34,7 @@ npm run build
 |------|------|
 | `ANTHROPIC_API_KEY` | **本番必須** — 選定・日本語要約 |
 | `ANTHROPIC_MODEL` | 既定 `claude-haiku-4-5-20251001` |
-| `SITE_URL` | 公開サイトの URL（digest リンクの組み立て） |
+| `SITE_URL` | 公開サイトの URL（X 下書きに載せる digest リンク用。digest 生成では使いません） |
 | `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` | Good/Bad（ブラウザ） |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | digest 集計（CI） |
 | `SLACK_WEBHOOK_URL` | X 投稿の下書き通知（[docs/X-AUTOMATION.md](docs/X-AUTOMATION.md)） |
@@ -52,7 +52,7 @@ npm run build
 ## セキュリティ
 
 API キーの扱い・漏洩時の手順: [docs/SECURITY.md](docs/SECURITY.md)  
-push / PR 時は [gitleaks](https://github.com/gitleaks/gitleaks) ワークフロー（[`.github/workflows/gitleaks.yml`](.github/workflows/gitleaks.yml)）で秘密情報の混入を検知します。
+push / PR 時と毎週月曜に [gitleaks](https://github.com/gitleaks/gitleaks) ワークフロー（[`.github/workflows/gitleaks.yml`](.github/workflows/gitleaks.yml)）で秘密情報の混入を検知します。bot の自動 commit は新しい run を起こさないため、週次スキャンがその分を拾います。
 
 ## UIモック（方式A）
 

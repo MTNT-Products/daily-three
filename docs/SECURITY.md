@@ -19,6 +19,7 @@ API キーなどの秘密情報が漏れないよう、リポジトリ運用と 
 - [ ] 公開リポジトリで **Secret scanning** を有効化  
   → [GitHub: Enabling secret scanning](https://docs.github.com/en/code-security/secret-scanning/enabling-secret-scanning-features/enabling-secret-scanning-for-your-repository)
 - [ ] push / PR 時に **gitleaks** ワークフローが通る（[`.github/workflows/gitleaks.yml`](../.github/workflows/gitleaks.yml)）
+- [ ] 週次（月曜 12:00 JST）の gitleaks スキャンが通る — bot の自動 commit は run を起こさないため、この回で検査される
 
 ## Anthropic（あなたのアカウント）
 

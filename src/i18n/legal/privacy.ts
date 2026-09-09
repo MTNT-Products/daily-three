@@ -30,6 +30,7 @@ export function privacySections(locale: Locale): { h2?: string; h3?: string; htm
       },
       {
         h2: '2. 当サイトで扱う情報',
+        html: '',
       },
       {
         h3: '2.1 Good / Bad フィードバック（Supabase）',
@@ -72,6 +73,7 @@ export function privacySections(locale: Locale): { h2?: string; h3?: string; htm
     },
     {
       h2: '2. Information we handle',
+      html: '',
     },
     {
       h3: '2.1 Good / Bad feedback (Supabase)',

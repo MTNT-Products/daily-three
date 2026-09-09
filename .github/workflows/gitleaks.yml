@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The digest and social jobs push with GITHUB_TOKEN, and those commits deliberately
+  # start no workflow run. Without this weekly sweep they were never scanned at all.
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,6 +21,7 @@ env:
 jobs:
   gitleaks:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
         with:
@@ -23,9 +29,13 @@ jobs:
 
       - name: Install gitleaks
         run: |
-          curl -sSfL -o gitleaks.tar.gz \
-            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
-          tar -xzf gitleaks.tar.gz gitleaks
+          BASE="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          ASSET="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$ASSET" "$BASE/$ASSET"
+          # A secret scanner that runs an unverified download is not much of a control.
+          curl -sSfL -o checksums.txt "$BASE/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep " $ASSET\$" checksums.txt | sha256sum -c -
+          tar -xzf "$ASSET" gitleaks
           ./gitleaks version
 
       - name: Scan full history

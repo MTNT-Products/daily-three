@@ -18,6 +18,9 @@ concurrency:
 jobs:
   digest-and-deploy:
     runs-on: ubuntu-latest
+    # Without this a hung external fetch runs to GitHub's 6-hour default, and the next
+    # weekday's run queues behind it (cancel-in-progress is off on purpose).
+    timeout-minutes: 30
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -30,6 +33,8 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      - run: npm run typecheck
 
       - run: npm test
 
@@ -46,17 +51,22 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/content/digest/ data/seen-urls.json 2>/dev/null || true
+          # No `|| true`: a failing git add staged nothing and the run still went green,
+          # reporting "no changes" for an edition that had just been written.
+          git add src/content/digest/ data/seen-urls.json
           if git diff --staged --quiet; then
             echo "No digest changes to commit"
           else
             EDITION=$(npx tsx scripts/print-edition-date.ts)
             git commit -m "chore(digest): auto-update ${EDITION}"
+            git pull --rebase origin ${{ github.ref_name }}
             git push
           fi
 
       - run: npm run build
         env:
+          # Fail the build rather than publish a site whose Good / Bad buttons are dead.
+          REQUIRE_PUBLIC_ENV: '1'
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
           PUBLIC_BMC_URL: ${{ secrets.PUBLIC_BMC_URL }}
