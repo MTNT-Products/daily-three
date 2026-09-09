@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import { fetchDezeenFeedText } from './dezeen-feed.js';
 import { isSquareCroppedImageUrl, normalizeImageUrl, scoreImageUrl } from './image-url.js';
 import {
   expandDezeenCandidates,
@@ -59,8 +60,17 @@ export async function fetchArticleMedia(
   return { images, video: page.video };
 }
 
+/** A malformed article URL is not worth an exception here. */
+function lastPathSegment(pageUrl: string): string {
+  try {
+    return new URL(pageUrl).pathname.split('/').filter(Boolean).pop() ?? '';
+  } catch {
+    return '';
+  }
+}
+
 function filterDesignboomArticle(pageUrl: string, urls: string[]): string[] {
-  const slug = new URL(pageUrl).pathname.split('/').filter(Boolean).pop() ?? '';
+  const slug = lastPathSegment(pageUrl);
   const tokens = slug.split('-').filter((t) => t.length > 4);
   const matched = urls.filter((u) => {
     const file = (u.split('/').pop() ?? '').toLowerCase();
@@ -207,12 +217,8 @@ async function fetchPageMedia(pageUrl: string): Promise<{ images: string[]; vide
 
 async function fetchDezeenRssVideo(pageUrl: string): Promise<ArticleVideo | undefined> {
   try {
-    const res = await fetch('https://www.dezeen.com/feed/', {
-      headers: { 'User-Agent': BROWSER_UA, Referer: 'https://www.dezeen.com/' },
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!res.ok) return undefined;
-    const text = await res.text();
+    const text = await fetchDezeenFeedText();
+    if (!text) return undefined;
     const chunk = findDezeenFeedItemChunk(text, pageUrl);
     if (!chunk) return undefined;
 

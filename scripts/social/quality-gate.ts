@@ -103,18 +103,26 @@ function looksLikeAName(word: string): boolean {
  * "Unified" and "The" are capitalised by position, not because they name anything. Those are
  * skipped unless their shape marks them as a name anyway.
  */
+/** Compounds of everyday words ("プロダクトデザイン") are not facts to check either. */
+function isCommonKatakana(word: string): boolean {
+  if (KATAKANA_COMMON_WORDS.has(word)) return true;
+  let rest = word;
+  for (const common of KATAKANA_COMMON_WORDS) rest = rest.split(common).join('');
+  return rest.replace(/ー/g, '') === '';
+}
+
 export function significantTerms(text: string): string[] {
-  const katakana = (text.match(/[ァ-ヶー]{3,}/g) ?? []).filter(
-    (w) => !KATAKANA_COMMON_WORDS.has(w),
-  );
+  const katakana = (text.match(/[ァ-ヶー]{3,}/g) ?? []).filter((w) => !isCommonKatakana(w));
 
   const latin: string[] = [];
   const latinPattern = /[A-Z][A-Za-z0-9.-]{2,}/g;
   for (const m of text.matchAll(latinPattern)) {
     const word = m[0];
     if (ENGLISH_LEAD_WORDS.has(word.toLowerCase())) continue;
-    const before = text.slice(0, m.index).trimEnd();
-    const sentenceInitial = before === '' || /[.!?:;]$/.test(before);
+    // A line break opens a sentence too, and Japanese closes one with 。 — trimming the
+    // newline off and looking only for ASCII stops made every such opener a fabrication.
+    const before = text.slice(0, m.index).replace(/[ \t\u3000]+$/, '');
+    const sentenceInitial = before === '' || /[.!?:;\n\r。！？：；」』）]$/.test(before);
     if (sentenceInitial && !looksLikeAName(word)) continue;
     latin.push(word);
   }

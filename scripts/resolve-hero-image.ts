@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import { fetchDezeenFeedText } from './dezeen-feed.js';
 import {
   isSquareCroppedImageUrl,
   normalizeImageUrl,
@@ -19,23 +20,56 @@ function fetchHeadersFor(url: string): Record<string, string> {
   return headers;
 }
 
+const PROBE_TIMEOUT_MS = 12_000;
+
+/** `bytes 0-0/812345` when the server honours Range, otherwise the plain length. */
+function sizeFromHeaders(headers: Headers): number {
+  const range = headers.get('content-range');
+  const total = range?.match(/\/(\d+)\s*$/)?.[1];
+  if (total) return Number(total);
+  return Number(headers.get('content-length') ?? 0) || 0;
+}
+
+/**
+ * Is this asset there, and how big? HEAD first, then a one-byte ranged GET for hosts
+ * that refuse HEAD. Downloading each candidate in full — several megabytes apiece,
+ * for every variant of every article — was pure waste and invited rate limits.
+ */
+async function probeImage(url: string): Promise<number | null> {
+  for (const method of ['HEAD', 'GET'] as const) {
+    try {
+      const headers = fetchHeadersFor(url);
+      if (method === 'GET') headers.Range = 'bytes=0-0';
+      const res = await fetch(url, {
+        method,
+        headers,
+        signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+      });
+      // Never read the body: the size is in the headers.
+      void res.body?.cancel().catch(() => undefined);
+      if (res.status === 405 || res.status === 501) continue; // HEAD refused; try GET
+      if (res.status === 429) {
+        console.warn(`[image] rate limited by ${new URL(url).host}`);
+        return null;
+      }
+      if (!res.ok) return null;
+      return sizeFromHeaders(res.headers);
+    } catch {
+      if (method === 'GET') return null;
+    }
+  }
+  return null;
+}
+
 /** Prefer non-square heroes by URL score, then file size among reachable assets. */
 export async function pickLargestReachableUrl(candidates: string[]): Promise<string | undefined> {
   const unique = [...new Set(candidates.map((u) => u.trim()).filter(Boolean))];
   const ranked: { url: string; score: number; bytes: number }[] = [];
 
   for (const url of unique) {
-    try {
-      const res = await fetch(url, {
-        headers: fetchHeadersFor(url),
-        signal: AbortSignal.timeout(12000),
-      });
-      if (!res.ok) continue;
-      const bytes = (await res.arrayBuffer()).byteLength;
-      ranked.push({ url, score: scoreImageUrl(url), bytes });
-    } catch {
-      /* try next */
-    }
+    const bytes = await probeImage(url);
+    if (bytes === null) continue;
+    ranked.push({ url, score: scoreImageUrl(url), bytes });
   }
 
   if (ranked.length === 0) return undefined;
@@ -213,8 +247,17 @@ function tokenMatchesSlugToken(token: string, file: string): boolean {
   return false;
 }
 
+/** A malformed article URL is not worth an exception here. */
+function lastPathSegment(pageUrl: string): string {
+  try {
+    return new URL(pageUrl).pathname.split('/').filter(Boolean).pop() ?? '';
+  } catch {
+    return '';
+  }
+}
+
 function matchesDezeenArticleSlug(pageUrl: string, imageUrl: string): boolean {
-  const slug = new URL(pageUrl).pathname.split('/').filter(Boolean).pop() ?? '';
+  const slug = lastPathSegment(pageUrl);
   const tokens = slug.split('-').filter((t) => t.length > 2);
   const file = (imageUrl.split('/').pop() ?? '').toLowerCase();
   const hits = tokens.filter((t) => tokenMatchesSlugToken(t, file)).length;
@@ -308,12 +351,8 @@ function pickDezeenImagesFromChunk(chunk: string, pageUrl: string): string[] {
 /** Dezeen article HTML is often 403; RSS content:encoded still lists full-size WordPress assets. */
 export async function fetchDezeenRssCandidates(pageUrl: string): Promise<string[]> {
   try {
-    const res = await fetch('https://www.dezeen.com/feed/', {
-      headers: fetchHeadersFor('https://www.dezeen.com/'),
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!res.ok) return [];
-    const text = await res.text();
+    const text = await fetchDezeenFeedText();
+    if (!text) return [];
     const chunk = findDezeenFeedItemChunk(text, pageUrl);
     if (!chunk) return [];
 
@@ -362,15 +401,17 @@ export async function resolveHeroImage(
   if (pageUrl.includes('designboom.com')) {
     const fromPage = await fetchDesignboomCandidates(pageUrl);
     const seeds = seed ? [seed, ...fromPage] : fromPage;
-    const normalized = seeds.map((u) => normalizeImageUrl(u, sourceId));
-    return pickLargestReachableUrl([...new Set(normalized)]);
+    // Both forms. Normalisation can rewrite a real filename into a 404, and this branch
+    // used to keep only the rewritten one, so there was nothing left to fall back to.
+    const variants = seeds.flatMap((u) => [u, normalizeImageUrl(u, sourceId)]);
+    return pickLargestReachableUrl([...new Set(variants)]);
   }
 
   if (sourceId?.includes('dezeen') || pageUrl.includes('dezeen.com')) {
     const rss = await fetchDezeenRssCandidates(pageUrl);
     if (rss.length > 0) {
-      const normalized = rss.map((u) => normalizeImageUrl(u, sourceId));
-      const picked = await pickLargestReachableUrl([...new Set(normalized)]);
+      const variants = rss.flatMap((u) => [u, normalizeImageUrl(u, sourceId)]);
+      const picked = await pickLargestReachableUrl([...new Set(variants)]);
       if (picked) return picked;
     }
 
@@ -378,8 +419,8 @@ export async function resolveHeroImage(
     if (seed) {
       candidates.push(seed, ...expandDezeenCandidates(seed));
     }
-    const normalized = candidates.map((u) => normalizeImageUrl(u, sourceId));
-    return pickLargestReachableUrl([...new Set(normalized)]);
+    const variants = candidates.flatMap((u) => [u, normalizeImageUrl(u, sourceId)]);
+    return pickLargestReachableUrl([...new Set(variants)]);
   }
 
   if (sourceId?.includes('core77') || pageUrl.includes('core77.com')) {

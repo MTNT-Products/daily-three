@@ -163,3 +163,16 @@ test('a name is still caught when its shape says so, even at a sentence start', 
 test('a proper noun mid-sentence is still caught', () => {
   assert.ok(significantTerms('It undercuts the Porsche by a wide margin.').includes('Porsche'));
 });
+
+test('significantTerms treats a line break as the start of a sentence', () => {
+  const text = ['Cabin space grows', 'Unified controls follow.'].join(String.fromCharCode(10));
+  assert.deepEqual(significantTerms(text), []);
+});
+
+test('significantTerms treats the Japanese full stop as the end of a sentence', () => {
+  assert.deepEqual(significantTerms('設計が変わった。Single unit で済む。'), []);
+});
+
+test('significantTerms ignores compounds of everyday katakana', () => {
+  assert.deepEqual(significantTerms('プロダクトデザインの話'), []);
+});

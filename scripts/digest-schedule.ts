@@ -24,7 +24,10 @@ function jstParts(now: Date): JstParts {
   }).formatToParts(now);
   const get = (type: Intl.DateTimeFormatPartTypes) =>
     Number(parts.find((p) => p.type === type)?.value ?? 0);
-  return { year: get('year'), month: get('month'), day: get('day'), hour: get('hour') };
+  // Some ICU builds report midnight as "24" under hour12: false, which would put the
+  // edition on the wrong side of every `hour < 12` test.
+  const hour = get('hour') % 24;
+  return { year: get('year'), month: get('month'), day: get('day'), hour };
 }
 
 function ymdString(year: number, month: number, day: number): string {

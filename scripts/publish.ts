@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { digestCalendarDate, DIGEST_TIMEZONE } from './digest-schedule.js';
 import type { DigestArticle } from './types.js';
@@ -10,6 +10,7 @@ export function publishDigest(
   locale: PublishLocale,
   lead: string,
   articles: DigestArticle[],
+  options: { overwrite?: boolean } = {},
 ) {
   const slug = digestCalendarDate(date);
   const dir = join(process.cwd(), 'src', 'content', 'digest', locale);
@@ -52,12 +53,24 @@ ${yamlArticles}
 `;
 
   const path = join(dir, `${slug}.md`);
+  // A second run of the same day used to silently replace the edition, and the articles
+  // it had already marked as seen could not be picked again. Nothing was recoverable.
+  if (existsSync(path) && !options.overwrite) {
+    throw new Error(
+      `${path} already exists - refusing to replace today's edition (pass --force to overwrite)`,
+    );
+  }
   writeFileSync(path, body, 'utf-8');
   return path;
 }
 
 function yamlQuote(s: string) {
-  const escaped = s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ');
+  const escaped = s
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    // Any control character, not just \n, would break out of the quoted scalar and make
+    // the file unreadable for every later run.
+    .replace(/[\u0000-\u001f\u007f]+/g, ' ');
   return `"${escaped}"`;
 }
 

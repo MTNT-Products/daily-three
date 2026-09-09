@@ -1,10 +1,18 @@
 import Parser from 'rss-parser';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CollectionConfig, RawArticle, SourceConfig } from './types.js';
 import { normalizeImageUrl } from './image-url.js';
+import { writeJsonAtomic } from './atomic-write.js';
 
-const parser = new Parser({ timeout: 15000 });
+/** Publishers drop unlabelled clients first; an unnamed fetcher invites a block. */
+const FEED_USER_AGENT =
+  'daily-three-digest/1.0 (+https://github.com/MTNT-Products/daily-three)';
+
+const parser = new Parser({
+  timeout: 15000,
+  headers: { 'User-Agent': FEED_USER_AGENT },
+});
 const SEEN_PATH = join(process.cwd(), 'data', 'seen-urls.json');
 
 const DEFAULT_MAX_AGE_HOURS: CollectionConfig['max_age_hours'] = {
@@ -26,6 +34,7 @@ export async function collectArticles(
   const seen = loadSeen();
   const articles: RawArticle[] = [];
   const maxAgeHours = resolveMaxAgeHours(collection);
+  let failed = 0;
 
   for (const source of sources) {
     const maxAge = maxAgeHours[source.category];
@@ -48,14 +57,26 @@ export async function collectArticles(
           sourceId: source.id,
           sourceName: source.name,
           category: source.category,
-          image: item.enclosure?.url
-            ? normalizeImageUrl(item.enclosure.url, source.id)
-            : undefined,
+          // Kept raw. Normalising here threw away the only copy of the publisher's
+          // own URL, and the hero resolver probes both forms anyway.
+          image: item.enclosure?.url?.trim() || undefined,
         });
       }
     } catch (err) {
+      failed++;
       console.warn(`[collect] Failed ${source.name}:`, err instanceof Error ? err.message : err);
     }
+  }
+
+  // Every feed failing is an outage, not a quiet news day. Reported as success, it left
+  // the digest silently empty for as long as the outage lasted.
+  if (sources.length > 0 && failed === sources.length) {
+    throw new Error(
+      `[collect] all ${failed} source(s) failed - not reporting an empty run as success`,
+    );
+  }
+  if (failed > 0) {
+    console.warn(`[collect] ${failed}/${sources.length} source(s) failed`);
   }
 
   return articles;
@@ -64,12 +85,28 @@ export async function collectArticles(
 export function markSeen(urls: string[]) {
   const seen = new Set([...loadSeen(), ...urls]);
   mkdirSync(join(process.cwd(), 'data'), { recursive: true });
-  writeFileSync(SEEN_PATH, JSON.stringify([...seen].slice(-5000), null, 2));
+  writeJsonAtomic(SEEN_PATH, [...seen].slice(-5000));
 }
 
-function loadSeen(): string[] {
+export function loadSeen(): string[] {
   if (!existsSync(SEEN_PATH)) return [];
-  return JSON.parse(readFileSync(SEEN_PATH, 'utf-8')) as string[];
+  try {
+    const parsed = JSON.parse(readFileSync(SEEN_PATH, 'utf-8')) as unknown;
+    if (!Array.isArray(parsed)) throw new Error('not a JSON array');
+    return parsed.filter((u): u is string => typeof u === 'string');
+  } catch (e) {
+    // Unguarded, a half-written file threw here on every run from then on. Set it aside
+    // and carry on: the worst case is re-offering an article that was already seen.
+    console.warn(
+      `[collect] seen-urls.json is unreadable (${(e as Error).message}) - setting it aside`,
+    );
+    try {
+      renameSync(SEEN_PATH, `${SEEN_PATH}.corrupt`);
+    } catch {
+      /* keep going even if the quarantine copy cannot be written */
+    }
+    return [];
+  }
 }
 
 function stripHtml(s: string) {

@@ -1,5 +1,6 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, renameSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { writeJsonAtomic } from '../atomic-write.js';
 import type { SocialLogEntry } from './types.js';
 
 /** Keep the log bounded — it is committed on every run. */
@@ -15,9 +16,18 @@ export function loadSocialLog(root = process.cwd()): SocialLogEntry[] {
 
   try {
     const parsed = JSON.parse(readFileSync(path, 'utf-8')) as unknown;
-    return Array.isArray(parsed) ? (parsed as SocialLogEntry[]) : [];
-  } catch {
-    console.warn('[social] social-log.json is unreadable — starting a new log');
+    if (!Array.isArray(parsed)) throw new Error('not a JSON array');
+    return parsed as SocialLogEntry[];
+  } catch (e) {
+    // Starting a new log in place would let the next save overwrite the whole history
+    // with one entry, and re-post articles already sent. Keep the damaged file.
+    console.warn(`[social] social-log.json is unreadable (${(e as Error).message})`);
+    try {
+      renameSync(path, `${path}.corrupt`);
+      console.warn(`[social] kept it as ${path}.corrupt and started a new log`);
+    } catch {
+      /* keep going even if the quarantine copy cannot be written */
+    }
     return [];
   }
 }
@@ -25,9 +35,7 @@ export function loadSocialLog(root = process.cwd()): SocialLogEntry[] {
 export function saveSocialLog(entries: SocialLogEntry[], root = process.cwd()): string {
   const path = socialLogPath(root);
   mkdirSync(dirname(path), { recursive: true });
-  const trimmed = entries.slice(-MAX_ENTRIES);
-  writeFileSync(path, `${JSON.stringify(trimmed, null, 2)}\n`, 'utf-8');
-  return path;
+  return writeJsonAtomic(path, entries.slice(-MAX_ENTRIES));
 }
 
 export function postedUrls(entries: SocialLogEntry[]): string[] {
