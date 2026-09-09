@@ -34,5 +34,23 @@
         "message": "digest に無い語: EVs"
       }
     ]
+  },
+  {
+    "draftedAt": "2026-09-09T23:45:14.716Z",
+    "digestDate": "2026-09-09",
+    "articleIndex": 2,
+    "articleUrl": "https://www.core77.com/posts/145293/Flip-Flexible-Flippable-Modular-Public-Seating",
+    "pickReason": "rotation",
+    "jaBody": "待機スペースの使われ方に合わせて座席を反転・格納できる設計。折り畳みテーブルも備え、空間効率と快適性のバランスを実現した公共座席システム。",
+    "enBody": "Seating that flips and stows to match changing occupancy patterns. Fold-down tables integrated throughout. Physical flexibility becomes the mechanism for balancing spatial density with user comfort.",
+    "jaText": "【Daily Three】9/9(水)\nFlip：柔軟で反転可能なモジュール式公共座席\n\n待機スペースの使われ方に合わせて座席を反転・格納できる設計。折り畳みテーブルも備え、空間効率と快適性のバランスを実現した公共座席システム。\n\n出典: Core77",
+    "enText": "Flip: Flexible, Flippable Modular Public Seating\n\nSeating that flips and stows to match changing occupancy patterns. Fold-down tables integrated throughout. Physical flexibility becomes the mechanism for balancing spatial density with user comfort.\n\nSource: Core77",
+    "issues": [
+      {
+        "level": "warn",
+        "code": "unsourced-ja",
+        "message": "digest に無い語: スペース"
+      }
+    ]
   }
 ]
