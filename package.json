@@ -10,7 +10,7 @@
     "dev": "astro dev",
     "dev:clean": "node -e \"require('fs').rmSync('node_modules/.vite',{recursive:true,force:true})\" && astro dev",
     "build": "node scripts/check-public-env.mjs && astro build && node scripts/copy-root-redirect.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "astro sync && tsc --noEmit",
     "preview": "astro preview",
     "digest": "tsx scripts/run-digest.ts",
     "digest:dry": "tsx scripts/run-digest.ts --dry-run",
