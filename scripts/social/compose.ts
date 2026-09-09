@@ -1,4 +1,5 @@
 import { getLlmConfig, type LlmConfig } from '../llm-config.js';
+import { extractJson } from '../llm-json.js';
 import { DIGEST_TIMEZONE } from '../digest-schedule.js';
 import { MAX_WEIGHTED_LENGTH, weightedLength } from './quality-gate.js';
 import type { SocialArticle } from './types.js';
@@ -103,9 +104,8 @@ function buildUserContent(input: ComposeInput, budget: { ja: number; en: number 
   )}${recentBlock}`;
 }
 
-function parseBodies(raw: string): ComposedBodies {
-  const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/```$/, '');
-  const parsed = JSON.parse(cleaned) as Partial<ComposedBodies>;
+export function parseBodies(raw: string): ComposedBodies {
+  const parsed = JSON.parse(extractJson(raw)) as Partial<ComposedBodies>;
   if (!parsed.ja?.trim() || !parsed.en?.trim()) {
     throw new Error('Anthropic response missing ja or en body');
   }
@@ -122,42 +122,103 @@ function overLimit(bodies: ComposedBodies, input: ComposeInput): string[] {
   return over;
 }
 
-/**
- * One Anthropic call per draft, plus one corrective retry when the model overshoots
- * its character budget (Haiku does, often enough to matter). Requires ANTHROPIC_API_KEY.
- */
-export async function composeBodies(
-  input: ComposeInput,
-  config: LlmConfig = getLlmConfig(),
-): Promise<ComposedBodies> {
+/** Same ceiling the digest picker uses; 1024 truncated the JSON and lost the notification. */
+const BASE_MAX_TOKENS = 4096;
+const CEILING_MAX_TOKENS = 8192;
+const MAX_COMPOSE_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 2000;
+
+export type BodyMessage = { role: 'user' | 'assistant'; content: string };
+export type BodyReply = { text: string; stopReason: string | null };
+export type BodyCall = (
+  messages: BodyMessage[],
+  options?: { maxTokens?: number },
+) => Promise<BodyReply>;
+
+async function anthropicBodyCall(config: LlmConfig): Promise<BodyCall> {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey: config.anthropicApiKey });
-  const budget = bodyBudget(input.jaArticle, input.enArticle, input.digestDate);
-  const messages: { role: 'user' | 'assistant'; content: string }[] = [
-    { role: 'user', content: buildUserContent(input, budget) },
-  ];
 
-  let bodies: ComposedBodies | null = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  return async (messages, options) => {
     const res = await client.messages.create({
       model: config.anthropicModel,
-      max_tokens: 1024,
+      max_tokens: options?.maxTokens ?? BASE_MAX_TOKENS,
       temperature: 0.8,
       system: SOCIAL_SYSTEM,
       messages,
     });
-
     const block = res.content.find((b) => b.type === 'text');
-    const raw = block?.type === 'text' ? block.text : '';
-    if (!raw) throw new Error('Anthropic returned empty response');
+    return { text: block?.type === 'text' ? block.text : '', stopReason: res.stop_reason };
+  };
+}
 
-    bodies = parseBodies(raw);
+/**
+ * Ask again when the model returns something unusable or overshoots its character budget.
+ * A single unparseable reply used to end the run before Slack was ever contacted, so the
+ * draft simply never arrived and nothing said why.
+ */
+export async function composeWithRetry(
+  input: ComposeInput,
+  call: BodyCall,
+  options: { sleep?: (ms: number) => Promise<void> } = {},
+): Promise<ComposedBodies> {
+  const sleep = options.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
+  const budget = bodyBudget(input.jaArticle, input.enArticle, input.digestDate);
+  const messages: BodyMessage[] = [{ role: 'user', content: buildUserContent(input, budget) }];
+
+  let lastError = new Error('Anthropic compose never ran');
+  let lastBodies: ComposedBodies | null = null;
+  let maxTokens = BASE_MAX_TOKENS;
+
+  for (let attempt = 1; attempt <= MAX_COMPOSE_ATTEMPTS; attempt++) {
+    let reply: BodyReply;
+    try {
+      reply = await call(messages, { maxTokens });
+    } catch (e) {
+      lastError = e as Error;
+      console.warn(
+        `[social] attempt ${attempt}/${MAX_COMPOSE_ATTEMPTS} call failed: ${lastError.message}`,
+      );
+      if (attempt === MAX_COMPOSE_ATTEMPTS) break;
+      await sleep(RETRY_DELAY_MS * attempt);
+      continue;
+    }
+
+    const truncated = reply.stopReason === 'max_tokens';
+    let bodies: ComposedBodies;
+    try {
+      if (!reply.text) throw new Error('Anthropic returned empty response');
+      bodies = parseBodies(reply.text);
+    } catch (e) {
+      const why = truncated
+        ? `${(e as Error).message} (response was cut off at max_tokens)`
+        : (e as Error).message;
+      lastError = new Error(why);
+      console.warn(`[social] attempt ${attempt}/${MAX_COMPOSE_ATTEMPTS} unusable: ${why}`);
+      console.warn(`[social] raw response (first 400 chars): ${reply.text.slice(0, 400)}`);
+      if (attempt === MAX_COMPOSE_ATTEMPTS) break;
+      if (truncated && maxTokens < CEILING_MAX_TOKENS) {
+        maxTokens = Math.min(CEILING_MAX_TOKENS, maxTokens * 2);
+        console.warn(`[social] raising max_tokens to ${maxTokens} for the retry`);
+      }
+      messages.push(
+        { role: 'assistant', content: reply.text || '(empty response)' },
+        {
+          role: 'user',
+          content: `That response was unusable: ${why}. Send the whole JSON object again, exactly {"ja": "...", "en": "..."}, both fields non-empty. JSON only.`,
+        },
+      );
+      continue;
+    }
+
+    lastBodies = bodies;
     const over = overLimit(bodies, input);
     if (over.length === 0) return bodies;
 
-    console.warn(`[social] Over budget (attempt ${attempt + 1}): ${over.join(', ')}`);
+    console.warn(`[social] Over budget (attempt ${attempt}): ${over.join(', ')}`);
+    if (attempt === MAX_COMPOSE_ATTEMPTS) break;
     messages.push(
-      { role: 'assistant', content: raw },
+      { role: 'assistant', content: reply.text },
       {
         role: 'user',
         content: `Too long for X: ${over.join(' and ')}. Rewrite both, keeping ja within ${budget.ja} Japanese characters and en within ${budget.en} characters. Same JSON shape.`,
@@ -165,5 +226,16 @@ export async function composeBodies(
     );
   }
 
-  return bodies as ComposedBodies;
+  // Too long is something the quality gate can flag and a human can trim; nothing to
+  // send at all is not. Only give up when no attempt produced usable bodies.
+  if (lastBodies) return lastBodies;
+  throw lastError;
+}
+
+/** One draft's ja+en bodies. Requires ANTHROPIC_API_KEY. */
+export async function composeBodies(
+  input: ComposeInput,
+  config: LlmConfig = getLlmConfig(),
+): Promise<ComposedBodies> {
+  return composeWithRetry(input, await anthropicBodyCall(config));
 }

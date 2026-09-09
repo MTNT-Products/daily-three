@@ -1,7 +1,7 @@
 import { loadGoodCountsByUrl } from '../feedback-supabase.js';
 import { buildEnText, buildJaText, buildReplyText, composeBodies } from './compose.js';
 import { digestUrl, latestDigestDate, pickArticle, readDigest } from './load-digest.js';
-import { notifySlack } from './notify-slack.js';
+import { notifySlack, notifySlackFailure } from './notify-slack.js';
 import { checkDraft, hasBlockingIssue } from './quality-gate.js';
 import {
   hasDraftFor,
@@ -90,6 +90,14 @@ async function main() {
       code: 'missing-en-digest',
       message: `${digestDate} の英語 digest が無いため、英語は日本語 summary から生成`,
     });
+  } else if (!en.articles[pick.index]) {
+    // The en digest exists but is short of this pick, so enArticle silently fell back
+    // to the Japanese one and the English post carries a Japanese headline.
+    issues.push({
+      level: 'warn',
+      code: 'missing-en-article',
+      message: `${digestDate} の英語 digest に ${pick.index + 1} 件目が無いため、英語は日本語 summary から生成`,
+    });
   }
 
   for (const issue of issues) {
@@ -119,7 +127,12 @@ async function main() {
   console.log('[social] Wrote', saveSocialLog(log));
 }
 
-main().catch((e) => {
+main().catch(async (e) => {
   console.error(e);
+  try {
+    await notifySlackFailure('の X 下書き生成', e);
+  } catch (notifyError) {
+    console.error('[social] Failure notice failed too:', notifyError);
+  }
   process.exit(1);
 });

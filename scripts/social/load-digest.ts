@@ -34,14 +34,30 @@ export function readDigest(
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!match) return null;
 
-  const fm = parse(match[1]) as Partial<SocialDigest>;
-  if (!fm.articles || fm.articles.length === 0) return null;
+  let fm: Partial<SocialDigest>;
+  try {
+    fm = parse(match[1]) as Partial<SocialDigest>;
+  } catch (e) {
+    console.warn(`[social] ${path} frontmatter is unreadable: ${(e as Error).message}`);
+    return null;
+  }
+
+  // `articles` was taken on trust. Written wrong it can be a string, which passed the
+  // length check here and only failed later inside .map, with nothing sent to Slack.
+  if (fm?.articles !== undefined && !Array.isArray(fm.articles)) {
+    console.warn(`[social] ${path}: articles is not a list`);
+    return null;
+  }
+  const articles = (fm?.articles ?? []).filter(
+    (a) => a?.title?.trim() && a?.summary?.trim() && a?.url?.trim(),
+  );
+  if (articles.length === 0) return null;
 
   return {
     date: fm.date ?? date,
     title: fm.title ?? date,
     lead: fm.lead ?? '',
-    articles: fm.articles,
+    articles,
   };
 }
 

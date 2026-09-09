@@ -1,6 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { parse } from 'yaml';
 import { collectArticles, markSeen } from './collect.js';
+import { loadSourcesFile } from './load-sources.js';
 import { buildSourceWeights, loadFeedbackWeights, pickTop3Bilingual, ruleScore } from './rank.js';
 import { applyRecentTopicPenalty, loadRecentStories } from './recent-digests.js';
 import { filterDuplicateStories } from './story-dedup.js';
@@ -12,7 +11,6 @@ import {
 } from './digest-schedule.js';
 import { publishDigest } from './publish.js';
 import { enrichImages } from './ogp.js';
-import type { SourcesFile } from './types.js';
 import type { DigestLocaleBundle } from './rank.js';
 
 const dryRun = process.argv.includes('--dry-run');
@@ -28,7 +26,7 @@ async function main() {
     return;
   }
 
-  const config = parse(readFileSync('sources.yaml', 'utf-8')) as SourcesFile;
+  const config = loadSourcesFile();
   const feedback = await loadFeedbackWeights();
   const sourceWeights = buildSourceWeights(config.sources, feedback);
 
@@ -82,10 +80,13 @@ async function main() {
     }
 
     if (round === MAX_IMAGE_REPICKS) {
+      // `image` is optional in the content schema. An edition with one picture missing
+      // beats no edition at all, which is what throwing here used to produce.
       const titles = missingImages.map((a) => a.title).join('; ');
-      throw new Error(
-        `[digest] still no reachable hero image after ${MAX_IMAGE_REPICKS} re-pick(s): ${titles}`,
+      console.warn(
+        `[digest] publishing without a hero image after ${MAX_IMAGE_REPICKS} re-pick(s): ${titles}`,
       );
+      break;
     }
     console.warn(`[digest] re-picking without ${unusable.size} article(s) that have no image`);
   }
@@ -101,12 +102,14 @@ async function main() {
     return;
   }
 
-  const pathJa = publishDigest(publishDate, 'ja', ja.lead, ja.articles);
+  const pathJa = publishDigest(publishDate, 'ja', ja.lead, ja.articles, { overwrite: forceRun });
   console.log('[digest] Wrote', pathJa);
 
   if (en.articles.length === 3 && en.lead?.trim()) {
     try {
-      const pathEn = publishDigest(publishDate, 'en', en.lead, en.articles);
+      const pathEn = publishDigest(publishDate, 'en', en.lead, en.articles, {
+        overwrite: forceRun,
+      });
       console.log('[digest] Wrote', pathEn);
     } catch (e) {
       console.warn('[digest] English publish skipped:', e);

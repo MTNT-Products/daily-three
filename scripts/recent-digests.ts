@@ -65,8 +65,16 @@ export function loadRecentStories(maxAgeDays = 7): RecentStory[] {
     const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
     if (!match) continue;
 
-    const fm = parse(match[1]) as DigestFrontmatter;
-    for (const a of fm.articles ?? []) {
+    let fm: DigestFrontmatter;
+    try {
+      fm = parse(match[1]) as DigestFrontmatter;
+    } catch (e) {
+      // One damaged past edition must not stop today's from being written.
+      console.warn(`[digest] skipping ${name}: frontmatter is unreadable (${(e as Error).message})`);
+      continue;
+    }
+    if (!Array.isArray(fm?.articles)) continue;
+    for (const a of fm.articles) {
       if (!a.url || !a.title) continue;
       stories.push({
         date: fm.date ?? date,

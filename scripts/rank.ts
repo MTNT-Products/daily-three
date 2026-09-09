@@ -2,6 +2,7 @@ import type { DigestArticle, RawArticle, ScoredArticle, SourcesFile } from './ty
 import { getLlmConfig, type LlmConfig } from './llm-config.js';
 import { loadFeedbackWeightsMerged } from './feedback-supabase.js';
 import { formatRecentForLlm, type RecentStory } from './recent-digests.js';
+import { extractJson } from './llm-json.js';
 
 const CURATION_SYSTEM = `You curate "Daily Three: Auto & Product Design" for an industrial product designer.
 Pick exactly 3 articles. Prioritize: new model debuts, concept cars, CMF. Penalize: racing, celebrity.
@@ -126,14 +127,8 @@ function mapBilingualPicks(top: ScoredArticle[], parsed: LlmJson): BilingualDige
   };
 }
 
-function extractJson(raw: string): string {
-  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fenced) return fenced[1].trim();
-  const start = raw.indexOf('{');
-  const end = raw.lastIndexOf('}');
-  if (start >= 0 && end > start) return raw.slice(start, end + 1);
-  return raw.trim();
-}
+/** An edition is three articles. Two picks used to pass and publish a short ja-only issue. */
+const PICK_COUNT = 3;
 
 /** Names the exact gap, so the log says what broke and a retry can quote it back. */
 export function validationProblem(parsed: LlmJson): string | null {
@@ -141,12 +136,21 @@ export function validationProblem(parsed: LlmJson): string | null {
   if (!parsed.leadEn?.trim()) return 'leadEn is missing or empty';
   if (!Array.isArray(parsed.picks)) return 'picks is not an array';
   if (parsed.picks.length === 0) return 'picks is empty';
+  if (parsed.picks.length !== PICK_COUNT) {
+    return `picks has ${parsed.picks.length} entries, expected exactly ${PICK_COUNT}`;
+  }
 
   const required = ['titleJa', 'summaryJa', 'titleEn', 'summaryEn'] as const;
-  for (const [i, pick] of parsed.picks.slice(0, 3).entries()) {
+  const seenIndexes = new Set<number>();
+  for (const [i, pick] of parsed.picks.entries()) {
     for (const field of required) {
       if (!pick?.[field]?.trim()) return `picks[${i}].${field} is missing or empty`;
     }
+    if (!Number.isInteger(pick.index)) return `picks[${i}].index is not a whole number`;
+    if (seenIndexes.has(pick.index)) {
+      return `picks[${i}].index ${pick.index} repeats an earlier pick — choose three different articles`;
+    }
+    seenIndexes.add(pick.index);
   }
   return null;
 }
@@ -166,16 +170,27 @@ Respond with JSON only, no markdown fences.`;
 
 export type PickMessage = { role: 'user' | 'assistant'; content: string };
 export type ModelReply = { text: string; stopReason: string | null };
-export type ModelCall = (messages: PickMessage[]) => Promise<ModelReply>;
+export type ModelCallOptions = { maxTokens?: number };
+export type ModelCall = (
+  messages: PickMessage[],
+  options?: ModelCallOptions,
+) => Promise<ModelReply>;
+
+/** Enough for three bilingual summaries; doubled once if the model still runs long. */
+const BASE_MAX_TOKENS = 4096;
+const CEILING_MAX_TOKENS = 8192;
+
+/** Overloaded and rate-limited are the common failures, and both pass with time. */
+const RETRY_DELAY_MS = 2000;
 
 async function anthropicCall(config: LlmConfig): Promise<ModelCall> {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey: config.anthropicApiKey });
 
-  return async (messages) => {
+  return async (messages, options) => {
     const res = await client.messages.create({
       model: config.anthropicModel,
-      max_tokens: 4096,
+      max_tokens: options?.maxTokens ?? BASE_MAX_TOKENS,
       temperature: 0.4,
       system: CURATION_SYSTEM_JSON_ONLY,
       messages,
@@ -193,28 +208,50 @@ export async function pickWithRetry(
   top: ScoredArticle[],
   recent: RecentStory[],
   call: ModelCall,
+  options: { sleep?: (ms: number) => Promise<void> } = {},
 ): Promise<BilingualDigest> {
+  const sleep = options.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
   const messages: PickMessage[] = [
     { role: 'user', content: JSON.stringify(buildPayload(top)) + formatRecentForLlm(recent) },
   ];
 
   let lastError = new Error('Anthropic pick never ran');
+  let maxTokens = BASE_MAX_TOKENS;
 
   for (let attempt = 1; attempt <= MAX_PICK_ATTEMPTS; attempt++) {
-    const reply = await call(messages);
+    let reply: ModelReply;
+    try {
+      reply = await call(messages, { maxTokens });
+    } catch (e) {
+      // A refused or dropped request (429, 529, timeout, bad model name) is exactly what
+      // this loop exists for. Outside the try it escaped and took the whole edition.
+      lastError = e as Error;
+      console.warn(
+        `[rank] attempt ${attempt}/${MAX_PICK_ATTEMPTS} call failed: ${lastError.message}`,
+      );
+      if (attempt === MAX_PICK_ATTEMPTS) break;
+      await sleep(RETRY_DELAY_MS * attempt);
+      continue;
+    }
 
     try {
       if (!reply.text) throw new Error('Anthropic returned empty response');
       return parseLlmJson(reply.text, top);
     } catch (e) {
-      const why =
-        reply.stopReason === 'max_tokens'
-          ? `${(e as Error).message} (response was cut off at max_tokens)`
-          : (e as Error).message;
+      const truncated = reply.stopReason === 'max_tokens';
+      const why = truncated
+        ? `${(e as Error).message} (response was cut off at max_tokens)`
+        : (e as Error).message;
       lastError = new Error(why);
       console.warn(`[rank] attempt ${attempt}/${MAX_PICK_ATTEMPTS} unusable: ${why}`);
       console.warn(`[rank] raw response (first 800 chars): ${reply.text.slice(0, 800)}`);
       if (attempt === MAX_PICK_ATTEMPTS) break;
+
+      // Asking again under the same ceiling just gets cut off at the same place.
+      if (truncated && maxTokens < CEILING_MAX_TOKENS) {
+        maxTokens = Math.min(CEILING_MAX_TOKENS, maxTokens * 2);
+        console.warn(`[rank] raising max_tokens to ${maxTokens} for the retry`);
+      }
 
       messages.push(
         { role: 'assistant', content: reply.text || '(empty response)' },

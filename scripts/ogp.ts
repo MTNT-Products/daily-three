@@ -98,6 +98,15 @@ export async function enrichArticleMedia(article: DigestArticle): Promise<Digest
 /** Enrich all articles (hero quality + carousel + video). */
 export async function enrichImages(articles: DigestArticle[]) {
   for (let i = 0; i < articles.length; i++) {
-    articles[i] = await enrichArticleMedia(articles[i]);
+    try {
+      articles[i] = await enrichArticleMedia(articles[i]);
+    } catch (e) {
+      // One article's media must not cost the edition. Leaving it without an image lets
+      // the caller re-pick, or publish the other two alongside it.
+      console.warn(
+        `[digest] media lookup failed for ${articles[i].url}:`,
+        e instanceof Error ? e.message : e,
+      );
+    }
   }
 }

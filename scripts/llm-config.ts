@@ -1,3 +1,5 @@
+export const DEFAULT_ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
+
 export interface LlmConfig {
   anthropicApiKey: string;
   anthropicModel: string;
@@ -10,6 +12,7 @@ export function getLlmConfig(): LlmConfig {
   }
   return {
     anthropicApiKey,
-    anthropicModel: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001',
+    // GitHub Actions defines an unset secret as an empty string, so `??` would let '' through.
+    anthropicModel: process.env.ANTHROPIC_MODEL?.trim() || DEFAULT_ANTHROPIC_MODEL,
   };
 }

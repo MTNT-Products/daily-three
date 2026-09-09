@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildSlackPayload, notifySlack, safeImageUrl } from './notify-slack.js';
+import { buildSlackPayload, intentUrl, notifySlack, safeImageUrl } from './notify-slack.js';
 import type { GateIssue, SocialDraft } from './types.js';
 
 const DRAFT: SocialDraft = {
@@ -58,17 +58,34 @@ test('buildSlackPayload omits the image block when the URL is unusable', () => {
 });
 
 /** Replace global fetch for one call; returns the bodies Slack was sent. */
-function stubSlack(responses: { ok: boolean; status: number; body?: string }[]) {
+type StubResponse = {
+  ok: boolean;
+  status: number;
+  body?: string;
+  retryAfter?: string;
+  throws?: string;
+};
+
+function stubSlack(responses: StubResponse[]) {
   const sent: unknown[] = [];
   const original = globalThis.fetch;
   let call = 0;
   globalThis.fetch = (async (_url: string, init: { body: string }) => {
     sent.push(JSON.parse(init.body));
     const r = responses[Math.min(call++, responses.length - 1)];
-    return { ok: r.ok, status: r.status, text: async () => r.body ?? '' };
+    if (r.throws) throw new Error(r.throws);
+    return {
+      ok: r.ok,
+      status: r.status,
+      text: async () => r.body ?? '',
+      headers: { get: (name: string) => (name.toLowerCase() === 'retry-after' ? (r.retryAfter ?? null) : null) },
+    };
   }) as unknown as typeof fetch;
   return { sent, restore: () => (globalThis.fetch = original) };
 }
+
+/** Nothing here should spend real seconds waiting out a backoff. */
+const noSleep = { sleep: async () => {} };
 
 test('notifySlack retries without the image when Slack rejects the blocks', async () => {
   const slack = stubSlack([
@@ -76,7 +93,7 @@ test('notifySlack retries without the image when Slack rejects the blocks', asyn
     { ok: true, status: 200 },
   ]);
   try {
-    await notifySlack(DRAFT, NO_ISSUES, 'https://hooks.slack.test/x');
+    await notifySlack(DRAFT, NO_ISSUES, 'https://hooks.slack.test/x', noSleep);
   } finally {
     slack.restore();
   }
@@ -93,7 +110,7 @@ test('notifySlack falls back to plain text when blocks keep failing', async () =
     { ok: true, status: 200 },
   ]);
   try {
-    await notifySlack(DRAFT, NO_ISSUES, 'https://hooks.slack.test/x');
+    await notifySlack(DRAFT, NO_ISSUES, 'https://hooks.slack.test/x', noSleep);
   } finally {
     slack.restore();
   }
@@ -109,10 +126,68 @@ test('notifySlack throws when even plain text is rejected', async () => {
   const slack = stubSlack([{ ok: false, status: 500, body: 'server_error' }]);
   try {
     await assert.rejects(
-      () => notifySlack(DRAFT, NO_ISSUES, 'https://hooks.slack.test/x'),
+      () => notifySlack(DRAFT, NO_ISSUES, 'https://hooks.slack.test/x', noSleep),
       /Slack webhook failed: 500/,
     );
   } finally {
     slack.restore();
   }
+});
+
+test('notifySlack retries a rate limit before stepping down the payload', async () => {
+  const waits: number[] = [];
+  const slack = stubSlack([
+    { ok: false, status: 429, body: 'rate_limited', retryAfter: '3' },
+    { ok: true, status: 200, body: 'ok' },
+  ]);
+  try {
+    await notifySlack(DRAFT, NO_ISSUES, 'https://hooks.slack.test/x', {
+      sleep: async (ms) => {
+        waits.push(ms);
+      },
+    });
+  } finally {
+    slack.restore();
+  }
+
+  assert.deepEqual(waits, [3000]);
+  assert.equal(slack.sent.length, 2);
+  const resent = slack.sent[1] as { blocks?: { type: string }[] };
+  assert.ok(resent.blocks?.some((b) => b.type === 'image'), 'the full message is resent as-is');
+});
+
+test('notifySlack survives a connection failure instead of losing the notification', async () => {
+  const slack = stubSlack([
+    { ok: false, status: 0, throws: 'fetch failed' },
+    { ok: true, status: 200, body: 'ok' },
+  ]);
+  try {
+    await notifySlack(DRAFT, NO_ISSUES, 'https://hooks.slack.test/x', noSleep);
+  } finally {
+    slack.restore();
+  }
+
+  assert.equal(slack.sent.length, 2);
+});
+
+test('notifySlack treats 200 with ok:false as a failure', async () => {
+  const slack = stubSlack([
+    { ok: true, status: 200, body: '{"ok":false,"error":"channel_not_found"}' },
+  ]);
+  try {
+    await assert.rejects(
+      () => notifySlack(DRAFT, NO_ISSUES, 'https://hooks.slack.test/x', noSleep),
+      /channel_not_found/,
+    );
+  } finally {
+    slack.restore();
+  }
+
+  assert.ok(slack.sent.length > 1, 'it steps down the payload instead of reporting success');
+});
+
+test('intentUrl does not throw on a lone surrogate', () => {
+  const lone = 'title ' + String.fromCharCode(0xd83d) + ' tail';
+  assert.doesNotThrow(() => intentUrl(lone));
+  assert.ok(intentUrl(lone).includes('title'));
 });
