@@ -52,5 +52,23 @@
         "message": "digest に無い語: スペース"
       }
     ]
+  },
+  {
+    "draftedAt": "2026-09-10T23:37:19.807Z",
+    "digestDate": "2026-09-10",
+    "articleIndex": 0,
+    "articleUrl": "https://www.designboom.com/design/korean-hanji-paper-sustainable-biomaterial-maison-et-objet-2026/",
+    "pickReason": "rotation",
+    "jaBody": "伝統工芸の美学と環境対応を素材レベルで統合。ハンジ紙から引き出した光透過性と触覚的な質感は、文化的背景を保ちながら機能を高める設計の参照例。",
+    "enBody": "Traditional craft heritage gains new purpose through material innovation. Tactile, light-diffusing hanji shows how cultural narratives strengthen rather than compromise performance.",
+    "jaText": "【Daily Three】9/10(木)\n千年の伝統を現代素材へ：韓国ハンジ紙がバイオマテリアルに変容\n\n伝統工芸の美学と環境対応を素材レベルで統合。ハンジ紙から引き出した光透過性と触覚的な質感は、文化的背景を保ちながら機能を高める設計の参照例。\n\n出典: Designboom",
+    "enText": "Ancient Hanji Paper Reimagined as Sustainable Biomaterial at Maison&Objet 2026\n\nTraditional craft heritage gains new purpose through material innovation. Tactile, light-diffusing hanji shows how cultural narratives strengthen rather than compromise performance.\n\nSource: Designboom",
+    "issues": [
+      {
+        "level": "error",
+        "code": "length-en",
+        "message": "en が 281/280 weighted units で超過"
+      }
+    ]
   }
 ]
