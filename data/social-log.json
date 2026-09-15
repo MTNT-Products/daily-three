@@ -100,5 +100,17 @@
         "message": "en が 286/280 weighted units で超過"
       }
     ]
+  },
+  {
+    "draftedAt": "2026-09-15T23:54:10.979Z",
+    "digestDate": "2026-09-15",
+    "articleIndex": 1,
+    "articleUrl": "https://www.motor1.com/news/808297/mitsubishi-pajero-why-lost-external-spare-wheel/",
+    "pickReason": "rotation",
+    "jaBody": "スペアタイヤの位置変更は、重心と日常の扱いやすさを総合的に考慮した判断。複数の制約から、使い勝手を高めるアプローチ。",
+    "enBody": "Relocating the spare wheel reflects a holistic approach to weight distribution and daily practicality. Multiple functional constraints shaped a more usable design.",
+    "jaText": "【Daily Three】9/15(火)\n新型ミツビシ・パジェロ：外付けスペアタイヤ廃止の設計的背景\n\nスペアタイヤの位置変更は、重心と日常の扱いやすさを総合的に考慮した判断。複数の制約から、使い勝手を高めるアプローチ。\n\n出典: Motor1 Design",
+    "enText": "New Mitsubishi Pajero: Integrated Spare Wheel Reflects User-Centric Design\n\nRelocating the spare wheel reflects a holistic approach to weight distribution and daily practicality. Multiple functional constraints shaped a more usable design.\n\nSource: Motor1 Design",
+    "issues": []
   }
 ]
