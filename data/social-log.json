@@ -82,5 +82,23 @@
     "jaText": "【Daily Three】9/11(金)\nダイソンのカメラジェット歯ブラシ：プロダクトデザインの新しい可能性\n\nテクノロジーと造形の統合、ユーザー体験、視覚的差異化。既存カテゴリーの前提を問い直すプロダクト手法論として参照できる事例。\n\n出典: Dezeen",
     "enText": "Dyson's CameraJet Toothbrush: Redefining Personal Care Product Design\n\nIntegrating technology, refining interaction, and establishing visual identity simultaneously—a methodology for designers to challenge conventional category boundaries.\n\nSource: Dezeen",
     "issues": []
+  },
+  {
+    "draftedAt": "2026-09-15T00:09:21.615Z",
+    "digestDate": "2026-09-14",
+    "articleIndex": 0,
+    "articleUrl": "https://www.autoexpress.co.uk/volkswagen/370419/sleek-new-volkswagen-mission-efficiency-unveiled-xl1-successor-500-mile-range",
+    "pickReason": "rotation",
+    "jaBody": "空力効率と家族向け室内を両立させたEVコンセプト。効率性を優先しながらも実用性を確保する設計が、次世代プレミアムEVの価値基準を示す。",
+    "enBody": "Aerodynamic efficiency and family usability coexist in this EV concept. Prioritizing drag reduction without sacrificing livable space redefines affordable premium EV value.",
+    "jaText": "【Daily Three】9/14(月)\nフォルクスワーゲン「Mission Efficiency」：XL1の後継、500マイル航続距離の新型EV\n\n空力効率と家族向け室内を両立させたEVコンセプト。効率性を優先しながらも実用性を確保する設計が、次世代プレミアムEVの価値基準を示す。\n\n出典: Auto Express",
+    "enText": "Volkswagen Mission Efficiency: XL1 Successor with 500-Mile Range and Family-Focused Design\n\nAerodynamic efficiency and family usability coexist in this EV concept. Prioritizing drag reduction without sacrificing livable space redefines affordable premium EV value.\n\nSource: Auto Express",
+    "issues": [
+      {
+        "level": "error",
+        "code": "length-en",
+        "message": "en が 286/280 weighted units で超過"
+      }
+    ]
   }
 ]
