@@ -124,5 +124,23 @@
     "jaText": "【Daily Three】9/16(水)\nセージ アイキューQ トースター：センサー技術が日常家電を再設計\n\n焼き色を読み取るセンサーが、ダイヤル操作を廃止した。計測に基づく制御へ移行することで、単純な家電にも技術が静かに統合される可能性を示す。\n\n出典: Dezeen",
     "enText": "Sage Appliances Eye-Q Toaster: Sensor Technology Reimagines Everyday Appliance Design\n\nColor sensing replaces manual dials, shifting operation from guesswork to sensor-driven precision. The design shows how embedded technology can streamline everyday appliances.\n\nSource: Dezeen",
     "issues": []
+  },
+  {
+    "draftedAt": "2026-09-17T23:50:47.218Z",
+    "digestDate": "2026-09-17",
+    "articleIndex": 0,
+    "articleUrl": "https://www.autoexpress.co.uk/volvo/370460/volvo-bring-back-buttons-and-celebrate-its-past-massive-range-revamp",
+    "pickReason": "rotation",
+    "jaBody": "デジタル疲労への設計的応答として、ボルボがボタンを復活させる。触覚的なインターフェースへの回帰は、スクリーン一辺倒からの転換を示唆している。",
+    "enBody": "Volvo brings back physical buttons as a response to digital fatigue. The shift toward tactile interfaces marks a deliberate departure from screen-centric design.",
+    "jaText": "【Daily Three】9/17(木)\nボルボが大規模リニューアル：ボタン復活と過去の遺産を祝うデザイン哲学\n\nデジタル疲労への設計的応答として、ボルボがボタンを復活させる。触覚的なインターフェースへの回帰は、スクリーン一辺倒からの転換を示唆している。\n\n出典: Auto Express",
+    "enText": "Volvo Plans Massive Range Revamp: Button Renaissance and Design Philosophy Shift\n\nVolvo brings back physical buttons as a response to digital fatigue. The shift toward tactile interfaces marks a deliberate departure from screen-centric design.\n\nSource: Auto Express",
+    "issues": [
+      {
+        "level": "warn",
+        "code": "unsourced-ja",
+        "message": "digest に無い語: インターフェース, スクリーン"
+      }
+    ]
   }
 ]
