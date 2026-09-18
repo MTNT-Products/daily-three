@@ -6,6 +6,8 @@ import {
   buildJaText,
   buildReplyText,
   composeWithRetry,
+  fitBodies,
+  fitToWeighted,
   parseBodies,
 } from './compose.js';
 import type { BodyCall } from './compose.js';
@@ -113,8 +115,67 @@ test('composeWithRetry raises max_tokens after a truncated response', async () =
   assert.deepEqual(asked, [4096, 8192]);
 });
 
-test('composeWithRetry keeps over-long bodies rather than losing the draft', async () => {
-  const long = JSON.stringify({ ja: 'あ'.repeat(300), en: 'x'.repeat(300) });
+test('fitToWeighted drops trailing Japanese sentences to fit', () => {
+  const s1 = '観察している。';
+  const s2 = '素材が形に落ちている。';
+  const s3 = '核は廃棄物の再定義だ。';
+  const max = weightedLength(s1 + s2);
+  assert.equal(fitToWeighted(s1 + s2 + s3, max), s1 + s2);
+});
+
+test('fitToWeighted drops trailing English sentences to fit', () => {
+  const text = 'One take on the material. Another sentence follows. A third overruns.';
+  const max = weightedLength('One take on the material. Another sentence follows.');
+  assert.equal(fitToWeighted(text, max), 'One take on the material. Another sentence follows.');
+});
+
+test('fitToWeighted does not split decimals when finding English sentences', () => {
+  const text = 'It weighs 2.5 tons in the final cast. That number is the whole point.';
+  const max = weightedLength('It weighs 2.5 tons in the final cast.');
+  assert.equal(fitToWeighted(text, max), 'It weighs 2.5 tons in the final cast.');
+});
+
+test('fitToWeighted cuts a long clause with an ellipsis', () => {
+  const text = '前半の観察があり、後半の結論を一気に書くと枠に収まらない長さになる';
+  const max = weightedLength('前半の観察があり…');
+  assert.equal(fitToWeighted(text, max), '前半の観察があり…');
+});
+
+test('fitToWeighted character-trims when there is no boundary', () => {
+  const fitted = fitToWeighted('あ'.repeat(50), 11);
+  assert.ok(weightedLength(fitted) <= 11);
+  assert.ok(fitted.endsWith('…') || [...fitted].length <= 5);
+});
+
+test('fitToWeighted is a no-op when the text already fits', () => {
+  assert.equal(fitToWeighted('短い。', 100), '短い。');
+});
+
+test('composeWithRetry asks the model to shorten before trimming in code', async () => {
+  const longJa = '観察している。素材が形に落ちている。核は廃棄物の再定義だ。'.repeat(8);
+  const longEn = Array(8)
+    .fill('One take on the material. Another sentence follows. A third overruns the limit.')
+    .join(' ');
+  const long = JSON.stringify({ ja: longJa, en: longEn });
+  const short = JSON.stringify({ ja: '観察している。', en: 'One take on the material.' });
+  const replies = [long, short];
+  let i = 0;
+  const call: BodyCall = async () => ({ text: replies[i++], stopReason: 'end_turn' });
+
+  const bodies = await composeWithRetry(INPUT, call, noSleep);
+
+  assert.equal(i, 2);
+  assert.equal(bodies.ja, '観察している。');
+  assert.equal(bodies.trimmedJa, false);
+  assert.equal(bodies.trimmedEn, false);
+});
+
+test('composeWithRetry trims after retries instead of shipping over-long text', async () => {
+  const longJa = '観察している。素材が形に落ちている。核は廃棄物の再定義だ。'.repeat(8);
+  const longEn = Array(8)
+    .fill('One take on the material. Another sentence follows. A third overruns the limit.')
+    .join(' ');
+  const long = JSON.stringify({ ja: longJa, en: longEn });
   let i = 0;
   const call: BodyCall = async () => {
     i++;
@@ -124,7 +185,31 @@ test('composeWithRetry keeps over-long bodies rather than losing the draft', asy
   const bodies = await composeWithRetry(INPUT, call, noSleep);
 
   assert.equal(i, 3);
-  assert.equal(bodies.ja.length, 300);
+  assert.equal(bodies.trimmedJa, true);
+  assert.equal(bodies.trimmedEn, true);
+  assert.ok(bodies.ja.startsWith('観察している。'));
+  assert.ok(bodies.ja.length < longJa.length);
+  assert.ok(bodies.en.length < longEn.length);
+  assert.ok(
+    weightedLength(buildJaText(INPUT.jaArticle, bodies.ja, INPUT.digestDate)) <= MAX_WEIGHTED_LENGTH,
+  );
+  assert.ok(weightedLength(buildEnText(INPUT.enArticle, bodies.en)) <= MAX_WEIGHTED_LENGTH);
+});
+
+test('fitBodies keeps the assembled posts inside the X limit', () => {
+  const fitted = fitBodies({ ja: 'あ'.repeat(300), en: 'x'.repeat(400) }, INPUT);
+  assert.equal(fitted.trimmedJa, true);
+  assert.equal(fitted.trimmedEn, true);
+  assert.ok(
+    weightedLength(buildJaText(INPUT.jaArticle, fitted.ja, INPUT.digestDate)) <= MAX_WEIGHTED_LENGTH,
+  );
+  assert.ok(weightedLength(buildEnText(INPUT.enArticle, fitted.en)) <= MAX_WEIGHTED_LENGTH);
+});
+
+test('fitBodies leaves a short draft unmarked', () => {
+  const fitted = fitBodies({ ja: '短い日本語の本文。', en: 'A short English body.' }, INPUT);
+  assert.equal(fitted.trimmedJa, false);
+  assert.equal(fitted.trimmedEn, false);
 });
 
 test('composeWithRetry gives up only when nothing usable ever arrives', async () => {

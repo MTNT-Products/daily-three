@@ -25,7 +25,7 @@ X API は 2026年2月に無料枠が廃止され、クレジット前払いの�
 [social-draft.yml]  火〜土 07:00 JST（cron: '0 22 * * 1-5' UTC）
   1. 最新 digest（ja / en の同一日）を読む          load-digest.ts
   2. 3件から1件を選ぶ（曜日ローテ ＋ Good 数で補正） load-digest.ts
-  3. Claude Haiku で日英の本文を生成                compose.ts
+  3. Claude Haiku で日英の本文を生成（超過は書き直し→コードで切る） compose.ts
   4. 品質ゲート（LLM を使わない純ロジック）          quality-gate.ts
   5. Slack へ通知（画像・コピペ用3ブロック・intent リンク）notify-slack.ts
   6. data/social-log.json に記録して commit          social-log.ts
@@ -51,7 +51,7 @@ X API は 2026年2月に無料枠が廃止され、クレジット前払いの�
 出典: {source}
 ```
 
-文字数は X の weighted 換算（日本語=2 / 英字=1 / URL=一律23、上限280）で管理する。枠の長さから本文の予算を逆算してプロンプトに渡し、それでも超えたら**1回だけ短く書き直させる**（Haiku は予算を超えることがある）。
+文字数は X の weighted 換算（日本語=2 / 英字=1 / URL=一律23、上限280）で管理する。枠の長さから本文の予算を逆算してプロンプトに渡し、超えたら**最大2回短く書き直させる**。それでも超えたら**コードが文末から切って 280 以内に収める**（Haiku は予算を超えることがある。字数はモデルではなくコードが保証する）。
 
 ## 記事の選び方
 
@@ -67,7 +67,8 @@ Supabase に届かない環境では黙って 1 と 3 だけで動く（Good 補
 
 | チェック | 対象 | 判定 |
 |----------|------|------|
-| 文字数 | 組み立て後の3本 | 280 weighted 超で `error` |
+| 文字数 | 組み立て後の3本 | 280 weighted 超で `error`（通常はコードが切るので起きない） |
+| 切り詰め | 生成本文 | リトライ後にコードで切った場合 `warn`（`trimmed-ja` / `trimmed-en`） |
 | URL 混入 | 1本目・2本目 | 本文に URL があれば `error` |
 | リンク欠落 | 3本目 | URL が無ければ `error` |
 | 重複 | 生成本文 vs 過去10件の本文 | 3-gram Dice 類似度 0.6 以上で `error` |
@@ -93,7 +94,7 @@ Supabase に届かない環境では黙って 1 と 3 だけで動く（Good 補
 | ファイル | 役割 |
 |----------|------|
 | `scripts/social/load-digest.ts` | digest の読み込みと記事選定 |
-| `scripts/social/compose.ts` | 枠の組み立て・文字数予算・Haiku 呼び出し（超過時1回リトライ） |
+| `scripts/social/compose.ts` | 枠の組み立て・文字数予算・Haiku 呼び出し（超過時は書き直し、だめならコードで切る） |
 | `scripts/social/quality-gate.ts` | 上表のチェック |
 | `scripts/social/notify-slack.ts` | Slack Block Kit ＋ `x.com/intent/post` リンク |
 | `scripts/social/social-log.ts` | `data/social-log.json` の読み書き |
@@ -123,7 +124,7 @@ X API の認証情報は不要。`social-draft.yml` は digest / デプロイと
 
 | 項目 | 月額 |
 |------|------|
-| Claude Haiku（1日1回、超過時のみ2回） | 約 ¥5〜10 |
+| Claude Haiku（1日1回、超過時のみ最大3回） | 約 ¥5〜10 |
 | GitHub Actions（public リポジトリ） | ¥0 |
 | Slack Incoming Webhook | ¥0 |
 | X API | **¥0（使わない）** |

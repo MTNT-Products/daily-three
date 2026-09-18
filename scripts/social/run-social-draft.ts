@@ -84,6 +84,21 @@ async function main() {
     recentBodies: past,
   });
 
+  if (bodies.trimmedJa) {
+    issues.push({
+      level: 'warn',
+      code: 'trimmed-ja',
+      message: '日本語本文を文末から切り詰めて 280 以内に収めた',
+    });
+  }
+  if (bodies.trimmedEn) {
+    issues.push({
+      level: 'warn',
+      code: 'trimmed-en',
+      message: '英語本文を文末から切り詰めて 280 以内に収めた',
+    });
+  }
+
   if (!en) {
     issues.push({
       level: 'warn',

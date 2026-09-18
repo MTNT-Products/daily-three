@@ -36,6 +36,12 @@ export interface ComposedBodies {
   en: string;
 }
 
+/** Bodies after retries, with whether code had to trim to the X limit. */
+export interface ComposeResult extends ComposedBodies {
+  trimmedJa: boolean;
+  trimmedEn: boolean;
+}
+
 function shortJaDate(digestDate: string): string {
   const d = new Date(`${digestDate}T12:00:00+09:00`);
   const parts = new Intl.DateTimeFormat('ja-JP', {
@@ -122,6 +128,153 @@ function overLimit(bodies: ComposedBodies, input: ComposeInput): string[] {
   return over;
 }
 
+const SENTENCE_END = new Set(['。', '！', '？']);
+const LATIN_SENTENCE_END = new Set(['.', '!', '?']);
+const CLAUSE_END = new Set(['、', '，', ';', '；']);
+
+function isDigit(ch: string | undefined): boolean {
+  return ch !== undefined && /\d/.test(ch);
+}
+
+function isSpace(ch: string | undefined): boolean {
+  return ch !== undefined && /\s/.test(ch);
+}
+
+function takeFollowingSpace(chars: string[], from: number): number {
+  let end = from;
+  while (end < chars.length && isSpace(chars[end])) end++;
+  return end;
+}
+
+/** Split on 。！？ and on .!? only when they end a sentence (not 2.5 or U.S.x). */
+export function splitSentences(text: string): string[] {
+  const chars = [...text];
+  const parts: string[] = [];
+  let start = 0;
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    if (SENTENCE_END.has(ch)) {
+      const end = takeFollowingSpace(chars, i + 1);
+      parts.push(chars.slice(start, end).join(''));
+      start = end;
+      i = end - 1;
+      continue;
+    }
+    if (!LATIN_SENTENCE_END.has(ch)) continue;
+    const prev = chars[i - 1];
+    const next = chars[i + 1];
+    if (ch === '.' && isDigit(prev) && isDigit(next)) continue;
+    if (next !== undefined && !isSpace(next)) continue;
+    const end = takeFollowingSpace(chars, i + 1);
+    parts.push(chars.slice(start, end).join(''));
+    start = end;
+    i = end - 1;
+  }
+  if (start < chars.length) parts.push(chars.slice(start).join(''));
+  return parts.filter((p) => p.trim().length > 0);
+}
+
+/** Split on 、 and on comma/semicolon that look like clause breaks (not 1,000). */
+export function splitClauses(text: string): string[] {
+  const chars = [...text];
+  const parts: string[] = [];
+  let start = 0;
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    if (CLAUSE_END.has(ch)) {
+      const end = takeFollowingSpace(chars, i + 1);
+      parts.push(chars.slice(start, end).join(''));
+      start = end;
+      i = end - 1;
+      continue;
+    }
+    if (ch !== ',') continue;
+    const next = chars[i + 1];
+    if (next !== undefined && !isSpace(next)) continue;
+    const end = takeFollowingSpace(chars, i + 1);
+    parts.push(chars.slice(start, end).join(''));
+    start = end;
+    i = end - 1;
+  }
+  if (start < chars.length) parts.push(chars.slice(start).join(''));
+  return parts.filter((p) => p.trim().length > 0);
+}
+
+function stripTrailingPause(text: string): string {
+  return text.replace(/[\s、，,;；]+$/u, '');
+}
+
+function asIncomplete(text: string): string {
+  const stripped = stripTrailingPause(text);
+  if (!stripped) return '…';
+  if (/[。！？.!?]$/.test(stripped)) return stripped;
+  return `${stripped}…`;
+}
+
+function keepPrefixUnits(
+  units: string[],
+  maxWeighted: number,
+  incomplete: boolean,
+): string | null {
+  if (units.length < 2) return null;
+  for (let n = units.length - 1; n >= 1; n--) {
+    const joined = units.slice(0, n).join('');
+    const candidate = incomplete ? asIncomplete(joined) : joined.replace(/\s+$/u, '');
+    if (candidate && weightedLength(candidate) <= maxWeighted) return candidate;
+  }
+  return null;
+}
+
+function trimChars(text: string, maxWeighted: number): string {
+  const chars = [...text];
+  for (let end = chars.length; end > 0; end--) {
+    const prefix = stripTrailingPause(chars.slice(0, end).join(''));
+    if (!prefix) continue;
+    if (/[。！？.!?]$/.test(prefix) && weightedLength(prefix) <= maxWeighted) return prefix;
+    const withEllipsis = `${prefix}…`;
+    if (weightedLength(withEllipsis) <= maxWeighted) return withEllipsis;
+  }
+  for (let end = chars.length; end > 0; end--) {
+    const prefix = chars.slice(0, end).join('').trim();
+    if (prefix && weightedLength(prefix) <= maxWeighted) return prefix;
+  }
+  return weightedLength('…') <= maxWeighted ? '…' : '';
+}
+
+/**
+ * Shrink `text` to at most `maxWeighted` X units.
+ * Prefer dropping trailing sentences, then clauses, then characters + ….
+ */
+export function fitToWeighted(text: string, maxWeighted: number): string {
+  const raw = text.trim();
+  if (maxWeighted <= 0) return '';
+  if (weightedLength(raw) <= maxWeighted) return raw;
+
+  const bySentence = keepPrefixUnits(splitSentences(raw), maxWeighted, false);
+  if (bySentence !== null) return bySentence;
+
+  const byClause = keepPrefixUnits(splitClauses(raw), maxWeighted, true);
+  if (byClause !== null) return byClause;
+
+  return trimChars(raw, maxWeighted);
+}
+
+function bodyRoom(assemble: (body: string) => string): number {
+  return MAX_WEIGHTED_LENGTH - weightedLength(assemble(''));
+}
+
+/** Trim ja/en so the assembled posts fit X's 280. No-op when they already do. */
+export function fitBodies(bodies: ComposedBodies, input: ComposeInput): ComposeResult {
+  const ja = fitToWeighted(bodies.ja, bodyRoom((body) => buildJaText(input.jaArticle, body, input.digestDate)));
+  const en = fitToWeighted(bodies.en, bodyRoom((body) => buildEnText(input.enArticle, body)));
+  return {
+    ja,
+    en,
+    trimmedJa: ja !== bodies.ja,
+    trimmedEn: en !== bodies.en,
+  };
+}
+
 /** Same ceiling the digest picker uses; 1024 truncated the JSON and lost the notification. */
 const BASE_MAX_TOKENS = 4096;
 const CEILING_MAX_TOKENS = 8192;
@@ -154,6 +307,7 @@ async function anthropicBodyCall(config: LlmConfig): Promise<BodyCall> {
 
 /**
  * Ask again when the model returns something unusable or overshoots its character budget.
+ * Length is retried first, then trimmed in code so Slack never gets a post over 280.
  * A single unparseable reply used to end the run before Slack was ever contacted, so the
  * draft simply never arrived and nothing said why.
  */
@@ -161,7 +315,7 @@ export async function composeWithRetry(
   input: ComposeInput,
   call: BodyCall,
   options: { sleep?: (ms: number) => Promise<void> } = {},
-): Promise<ComposedBodies> {
+): Promise<ComposeResult> {
   const sleep = options.sleep ?? ((ms: number) => new Promise((r) => setTimeout(r, ms)));
   const budget = bodyBudget(input.jaArticle, input.enArticle, input.digestDate);
   const messages: BodyMessage[] = [{ role: 'user', content: buildUserContent(input, budget) }];
@@ -213,7 +367,7 @@ export async function composeWithRetry(
 
     lastBodies = bodies;
     const over = overLimit(bodies, input);
-    if (over.length === 0) return bodies;
+    if (over.length === 0) return { ...bodies, trimmedJa: false, trimmedEn: false };
 
     console.warn(`[social] Over budget (attempt ${attempt}): ${over.join(', ')}`);
     if (attempt === MAX_COMPOSE_ATTEMPTS) break;
@@ -226,9 +380,17 @@ export async function composeWithRetry(
     );
   }
 
-  // Too long is something the quality gate can flag and a human can trim; nothing to
-  // send at all is not. Only give up when no attempt produced usable bodies.
-  if (lastBodies) return lastBodies;
+  // Length is an output invariant: retry first, then trim in code. Only give up when
+  // no attempt produced usable bodies at all.
+  if (lastBodies) {
+    const fitted = fitBodies(lastBodies, input);
+    if (fitted.trimmedJa || fitted.trimmedEn) {
+      console.warn(
+        `[social] Trimmed to X limit:${fitted.trimmedJa ? ' ja' : ''}${fitted.trimmedEn ? ' en' : ''}`,
+      );
+    }
+    return fitted;
+  }
   throw lastError;
 }
 
@@ -236,6 +398,6 @@ export async function composeWithRetry(
 export async function composeBodies(
   input: ComposeInput,
   config: LlmConfig = getLlmConfig(),
-): Promise<ComposedBodies> {
+): Promise<ComposeResult> {
   return composeWithRetry(input, await anthropicBodyCall(config));
 }
