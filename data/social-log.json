@@ -154,5 +154,23 @@
     "jaText": "【Daily Three】9/18(金)\nニューヨークのアーティスト集団、気候変動への警告を込めたトートバッグ兼ライフジャケット\n\n日常の荷物入れが洪水対策に変わる。素材と仕組みの工夫で、警告メッセージを実用的な形に落とし込んだプロダクト。\n\n出典: Dezeen",
     "enText": "New York Artists Create Dual-Function Tote Bag and Life Jacket as Climate Statement\n\nA tote transforms into a life jacket through material and mechanism design. The work embeds climate awareness into functional form rather than symbolic gesture.\n\nSource: Dezeen",
     "issues": []
+  },
+  {
+    "draftedAt": "2026-09-22T00:29:25.977Z",
+    "digestDate": "2026-09-21",
+    "articleIndex": 0,
+    "articleUrl": "https://www.dezeen.com/2026/09/20/bugatti-skyscraper-miami-brandon-haw-yabu-pushelberg/",
+    "pickReason": "rotation",
+    "jaBody": "自動車ブランドが建築に進出する際、デザイン言語をどう空間に翻訳するか。ブガッティのマイアミ・プロジェクトは、ブランド・アイデンティティを保ちながら都市スケールで形態化させる事例。",
+    "enBody": "Translating automotive design language into architectural form presents a distinct challenge. Bugatti's Miami tower shows how brand identity can persist across scales and typologies.",
+    "jaText": "【Daily Three】9/21(月)\nブガッティ、マイアミに初の米国ブランデッド・レジデンスを計画\n\n自動車ブランドが建築に進出する際、デザイン言語をどう空間に翻訳するか。ブガッティのマイアミ・プロジェクトは、ブランド・アイデンティティを保ちながら都市スケールで形態化させる事例。\n\n出典: Dezeen",
+    "enText": "Bugatti Unveils Miami Skyscraper as First US Branded Residence\n\nTranslating automotive design language into architectural form presents a distinct challenge. Bugatti's Miami tower shows how brand identity can persist across scales and typologies.\n\nSource: Dezeen",
+    "issues": [
+      {
+        "level": "warn",
+        "code": "unsourced-ja",
+        "message": "digest に無い語: プロジェクト"
+      }
+    ]
   }
 ]
