@@ -172,5 +172,17 @@
         "message": "digest に無い語: プロジェクト"
       }
     ]
+  },
+  {
+    "draftedAt": "2026-09-22T23:56:54.472Z",
+    "digestDate": "2026-09-22",
+    "articleIndex": 1,
+    "articleUrl": "https://www.dezeen.com/2026/09/22/billy-easter-public-parts-silicone-gel-lamp/",
+    "pickReason": "rotation",
+    "jaBody": "シリコン製の立方体ランプに透光性スラブを差し込んで色を変える。素材の透光性と組み替え可能な構造で、照明を操作する体験を設計。",
+    "enBody": "A cubic silicone lamp where users insert translucent slabs to shift color. Material transparency and modular structure turn lighting into an interactive object.",
+    "jaText": "【Daily Three】9/22(火)\nBilly Easter『ゲルランプ』：トランスポーザブルスライドによるインタラクティブ色彩設計\n\nシリコン製の立方体ランプに透光性スラブを差し込んで色を変える。素材の透光性と組み替え可能な構造で、照明を操作する体験を設計。\n\n出典: Dezeen",
+    "enText": "Billy Easter's Gel Lamp: Interactive Color Design Through Transposable Silicone Elements\n\nA cubic silicone lamp where users insert translucent slabs to shift color. Material transparency and modular structure turn lighting into an interactive object.\n\nSource: Dezeen",
+    "issues": []
   }
 ]
