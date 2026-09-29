@@ -220,5 +220,23 @@
     "jaText": "【Daily Three】9/25(金)\nGjergji Shkurti、ブルックリンの Million Goods で小売と体験の境界を融解\n\n大理石とカスタムミルワークが、バーと小売の領域を物質的に結ぶ。赤い螺旋階段が窓越しに視認可能な設計。\n\n出典: Dezeen",
     "enText": "Gjergji Shkurti Integrates Bar, Retail and Curated Goods at Million Goods in Brooklyn\n\nMaterial specificity connects hospitality and retail zones. A glossy red spiral stair visible from the street unifies distinct programs through form.\n\nSource: Dezeen",
     "issues": []
+  },
+  {
+    "draftedAt": "2026-09-29T01:23:36.515Z",
+    "digestDate": "2026-09-28",
+    "articleIndex": 0,
+    "articleUrl": "https://www.dezeen.com/2026/09/28/nest-egg-filament-piggy-bank/",
+    "pickReason": "rotation",
+    "jaBody": "デジタル決済が失わせた『手で触れる感覚』を、卵型の物理オブジェクトで意図的に取り戻す。素材と形態による直感的な操作感が、子どもの金銭認識をどう形作るかという問い。",
+    "enBody": "As digital payments abstract financial experience, an egg-shaped object restores tactile feedback to learning money management. Material and form become the medium for cognitive development.",
+    "jaText": "【Daily Three】9/28(月)\nネストエッグ：デジタル化した子どもの金銭教育を物理インタラクションで再構築\n\nデジタル決済が失わせた『手で触れる感覚』を、卵型の物理オブジェクトで意図的に取り戻す。素材と形態による直感的な操作感が、子どもの金銭認識をどう形作るかという問い。\n\n出典: Dezeen",
+    "enText": "Nest Egg: Reintroducing Tactile Engagement to Digital Financial Literacy\n\nAs digital payments abstract financial experience, an egg-shaped object restores tactile feedback to learning money management. Material and form become the medium for cognitive development.\n\nSource: Dezeen",
+    "issues": [
+      {
+        "level": "warn",
+        "code": "unsourced-ja",
+        "message": "digest に無い語: オブジェクト"
+      }
+    ]
   }
 ]
