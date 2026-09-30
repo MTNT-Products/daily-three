@@ -238,5 +238,17 @@
         "message": "digest に無い語: オブジェクト"
       }
     ]
+  },
+  {
+    "draftedAt": "2026-09-30T00:57:20.678Z",
+    "digestDate": "2026-09-29",
+    "articleIndex": 1,
+    "articleUrl": "https://www.designboom.com/design/roca-in-wash-vorea-smart-toilet/",
+    "pickReason": "rotation",
+    "jaBody": "複数の操作方法を備えながら、余白を徹底して削ぎ落とす。機能の隠蔽と視覚的な静けさの両立が、日用器具の設計課題として浮かび上がる。",
+    "enBody": "Multiple control methods coexist within deliberate visual restraint. How to embed functionality without visual noise remains the central design tension in everyday fixtures.",
+    "jaText": "【Daily Three】9/29(火)\nロカ In-Wash® Vorea：スマートトイレの極小化と個人化インターフェース\n\n複数の操作方法を備えながら、余白を徹底して削ぎ落とす。機能の隠蔽と視覚的な静けさの両立が、日用器具の設計課題として浮かび上がる。\n\n出典: Designboom",
+    "enText": "Roca In-Wash® Vorea: Smart Toilet Minimalism and Personalization Interface\n\nMultiple control methods coexist within deliberate visual restraint. How to embed functionality without visual noise remains the central design tension in everyday fixtures.\n\nSource: Designboom",
+    "issues": []
   }
 ]
