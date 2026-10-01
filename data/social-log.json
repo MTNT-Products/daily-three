@@ -250,5 +250,23 @@
     "jaText": "【Daily Three】9/29(火)\nロカ In-Wash® Vorea：スマートトイレの極小化と個人化インターフェース\n\n複数の操作方法を備えながら、余白を徹底して削ぎ落とす。機能の隠蔽と視覚的な静けさの両立が、日用器具の設計課題として浮かび上がる。\n\n出典: Designboom",
     "enText": "Roca In-Wash® Vorea: Smart Toilet Minimalism and Personalization Interface\n\nMultiple control methods coexist within deliberate visual restraint. How to embed functionality without visual noise remains the central design tension in everyday fixtures.\n\nSource: Designboom",
     "issues": []
+  },
+  {
+    "draftedAt": "2026-10-01T00:59:58.546Z",
+    "digestDate": "2026-09-30",
+    "articleIndex": 2,
+    "articleUrl": "https://www.designboom.com/readers/helvetus-fkm-rubber-integrated-luxury-watch-strap/",
+    "pickReason": "rotation",
+    "jaBody": "ロレックス向けFKMストラップは、ケースフィットと耐久性を素材選択で統合する。ラグジュアリー製品の細部設計における、機能と素材の関係性を示す。",
+    "enBody": "FKM straps engineered for Rolex balance precision fit with material durability. The design treats strap as case extension, where elastomer choice drives functional integration.",
+    "jaText": "【Daily Three】9/30(水)\nhelvetus、FKMラバーで統合型ラグジュアリーウォッチストラップを再考\n\nロレックス向けFKMストラップは、ケースフィットと耐久性を素材選択で統合する。ラグジュアリー製品の細部設計における、機能と素材の関係性を示す。\n\n出典: Designboom",
+    "enText": "Helvetus Rethinks Integrated Luxury Watch Strap with FKM Rubber Innovation\n\nFKM straps engineered for Rolex balance precision fit with material durability. The design treats strap as case extension, where elastomer choice drives functional integration.\n\nSource: Designboom",
+    "issues": [
+      {
+        "level": "warn",
+        "code": "unsourced-ja",
+        "message": "digest に無い語: ケースフィット"
+      }
+    ]
   }
 ]
